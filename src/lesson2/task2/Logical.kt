@@ -2,6 +2,9 @@
 package lesson2.task2
 
 import lesson1.task1.sqr
+import lesson1.task1.trackLength
+import java.lang.Math.pow
+import kotlin.math.abs
 
 /**
  * Пример
@@ -12,12 +15,18 @@ fun pointInsideCircle(x: Double, y: Double, x0: Double, y0: Double, r: Double) =
         sqr(x - x0) + sqr(y - y0) <= sqr(r)
 
 /**
+ * Returns the sum of digits of the number
+ * @param number target number
+ */
+fun sumDigits(number: Int) = number.toString().sumBy { char -> char.toInt() }
+
+/**
  * Простая
  *
  * Четырехзначное число назовем счастливым, если сумма первых двух ее цифр равна сумме двух последних.
  * Определить, счастливое ли заданное число, вернуть true, если это так.
  */
-fun isNumberHappy(number: Int): Boolean = TODO()
+fun isNumberHappy(number: Int) = sumDigits(number) == 2 * sumDigits(number / 100)
 
 /**
  * Простая
@@ -26,8 +35,19 @@ fun isNumberHappy(number: Int): Boolean = TODO()
  * Определить, угрожают ли они друг другу. Вернуть true, если угрожают.
  * Считать, что ферзи не могут загораживать друг друга.
  */
-fun queenThreatens(x1: Int, y1: Int, x2: Int, y2: Int): Boolean = TODO()
+fun queenThreatens(x1: Int, y1: Int, x2: Int, y2: Int) =
+        x1 == x2 || y1 == y2 || abs(x1 - x2) == abs(y1 - y2)
 
+/**
+ * Returns true if the year is leap
+ * @param year the year to test
+ */
+fun isLeadYear(year: Int) = when {
+    year % 400 == 0 -> true
+    year % 100 == 0 -> false
+    year % 4 == 0 -> true
+    else -> false
+}
 
 /**
  * Простая
@@ -35,7 +55,16 @@ fun queenThreatens(x1: Int, y1: Int, x2: Int, y2: Int): Boolean = TODO()
  * Дан номер месяца (от 1 до 12 включительно) и год (положительный).
  * Вернуть число дней в этом месяце этого года по григорианскому календарю.
  */
-fun daysInMonth(month: Int, year: Int): Int = TODO()
+fun daysInMonth(month: Int, year: Int): Int {
+    val isLeap = isLeadYear(year)
+    val februaryLength = if (isLeap) 29 else 28
+
+    return when {
+        month == 2 -> februaryLength
+        (month + month / 8) % 2 == 0 -> 30
+        else -> 31
+    }
+}
 
 /**
  * Средняя
@@ -45,7 +74,13 @@ fun daysInMonth(month: Int, year: Int): Int = TODO()
  * Вернуть true, если утверждение верно
  */
 fun circleInside(x1: Double, y1: Double, r1: Double,
-                 x2: Double, y2: Double, r2: Double): Boolean = TODO()
+                 x2: Double, y2: Double, r2: Double): Boolean = trackLength(x1, y1, x2, y2) <= r2 - r1
+
+/**
+ * Returns true if the brick with that side being
+ * moved forward can pass the hole
+ */
+fun brickSidePasses(a: Int, b: Int, r: Int, s: Int) = (a <= r && b <= s) || (a <= s && b <= r)
 
 /**
  * Средняя
@@ -56,4 +91,5 @@ fun circleInside(x1: Double, y1: Double, r1: Double,
  * кирпич 4 х 4 х 4 пройдёт через отверстие 4 х 4.
  * Вернуть true, если кирпич пройдёт
  */
-fun brickPasses(a: Int, b: Int, c: Int, r: Int, s: Int): Boolean = TODO()
+fun brickPasses(a: Int, b: Int, c: Int, r: Int, s: Int): Boolean =
+        brickSidePasses(a, b, r, s) || brickSidePasses(a, c, r, s) || brickSidePasses(b, c, r, s)
