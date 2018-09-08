@@ -89,6 +89,9 @@ class Tests {
     fun travelMinutes() {
         assertEquals(216, travelMinutes(9, 25, 13, 1))
         assertEquals(1, travelMinutes(21, 59, 22, 0))
+
+        // custom night-trip test
+        assertEquals(336, travelMinutes(23, 25, 5, 1))
     }
 
     @Test
