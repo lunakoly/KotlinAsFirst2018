@@ -86,11 +86,12 @@ fun digitNumber(n: Int): Int {
  * Ряд Фибоначчи определён следующим образом: fib(1) = 1, fib(2) = 1, fib(n+2) = fib(n) + fib(n+1)
  */
 fun fib(n: Int): Int {
-    var n1 = 0
-    var n2 = 1
+    var n1 = 0  // (n - 1)-th and
+    var n2 = 1  // (n - 2)-th numbers
 
     // I virtually define fib(-1) = 1
-    // and fib(0) = 0
+    // and fib(0) = 0 to get rid
+    // of 'special' cases
 
     for (i in 1 until n) {
         val t = n1
@@ -326,6 +327,8 @@ fun digitAt(n: Int, index: Int): Int =  n / pow(10.0, index.toDouble()).toInt() 
  * Использовать операции со строками в этой задаче запрещается.
  */
 fun squareSequenceDigit(n: Int): Int {
+    // 'reached' is the amount of digits
+    // of sequence we've already 'checked'
     var reached = 0
     var number = 1
     var sqr = 0
@@ -352,8 +355,8 @@ fun fibSequenceDigit(n: Int): Int {
     var reached = 0
     var number = 0
 
-    var n1 = 0
-    var n2 = 1
+    var n1 = 0  // (n - 1)-th and
+    var n2 = 1  // (n - 2)-th numbers
 
     while (reached < n) {
         number = n1 + n2
