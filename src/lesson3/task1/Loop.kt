@@ -68,7 +68,7 @@ fun digitCountInNumber(n: Int, m: Int): Int =
  * Использовать операции со строками в этой задаче запрещается.
  */
 fun digitNumber(n: Int): Int {
-    var number = n
+    var number = abs(n)
     var count = 0
 
     do {
@@ -153,7 +153,7 @@ fun isCoPrime(m: Int, n: Int): Boolean {
         if (m % i == 0 && n % i == 0)
             return false
 
-    return bigger % smaller != 0
+    return bigger % smaller != 0 || smaller == 1
 }
 
 /**

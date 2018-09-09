@@ -70,6 +70,7 @@ class Tests {
         assertEquals(2, digitNumber(99))
         assertEquals(3, digitNumber(123))
         assertEquals(10, digitNumber(Int.MAX_VALUE))
+        assertEquals(10, digitNumber(-1768005302))
     }
 
     @Test
@@ -137,7 +138,7 @@ class Tests {
         assertTrue(isCoPrime(17, 97))
         assertFalse(isCoPrime(37, 111))
         assertTrue(isCoPrime(1234567890, 908765431))
-        assertTrue(isCoPrime(2109876543, 1234567891))
+        assertTrue(isCoPrime(1, 18396))
     }
 
     @Test
