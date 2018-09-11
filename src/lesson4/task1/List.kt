@@ -467,15 +467,17 @@ fun russian(n: Int): String {
     val left = parseTriad(n / 1000, 1)
     val right = parseTriad(n, 0)
     val leftFirstDigit = n / 1000 % 10
+    val leftSecondDigit = n / 10000 % 10
 
     // I split the word as
     //     XXX YYY
     //    left right
 
     if (left.isNotEmpty()) {
-        val middle = when (leftFirstDigit) {
-            1 -> "тысяча"
-            in 2..4 -> "тысячи"
+        val middle = when {
+            leftSecondDigit == 1 -> "тысяч"
+            leftFirstDigit == 1 -> "тысяча"
+            leftFirstDigit in 2..4 -> "тысячи"
             else -> "тысяч"
         }
         return (left + middle + right).joinToString(" ")
