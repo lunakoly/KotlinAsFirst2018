@@ -102,7 +102,7 @@ fun thirdDigit(number: Int) = number / 100 % 10
 /**
  * 24 hours presented by the number of minutes
  */
-const val MINUTES_IN_DAY = 24 * 60
+const val MINUTES_PER_DAY = 24 * 60
 
 /**
  * Простая
@@ -114,15 +114,15 @@ const val MINUTES_IN_DAY = 24 * 60
 fun travelMinutes(hoursDepart: Int, minutesDepart: Int, hoursArrive: Int, minutesArrive: Int): Int {
     // transform input numbers presented as 60-base values
     // to numbers with 10-base values
-    val departureIn10 = minutesDepart + hoursDepart * 60
-    var arrivalIn10 = minutesArrive + hoursArrive * 60
+    val departureInMinutes = minutesDepart + hoursDepart * 60
+    var arrivalInMinutes = minutesArrive + hoursArrive * 60
 
     // if the train left the station in the evening
     // and arrived in early morning
-    if (arrivalIn10 < departureIn10)
-        arrivalIn10 += MINUTES_IN_DAY
+    if (arrivalInMinutes < departureInMinutes)
+        arrivalInMinutes += MINUTES_PER_DAY
 
-    return arrivalIn10 - departureIn10
+    return arrivalInMinutes - departureInMinutes
 }
 
 
