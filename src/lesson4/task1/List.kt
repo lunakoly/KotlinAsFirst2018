@@ -386,7 +386,7 @@ val RUSSIAN_NUMBERS = listOf(
                 Word("девять")
         ),
         listOf(
-                Word("Десять"),
+                Word("десять"),
                 Word("одиннадцать"),
                 Word("двенадцать"),
                 Word("тринадцать"),
