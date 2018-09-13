@@ -313,13 +313,15 @@ fun decimalFromString(str: String, base: Int): Int {
  * Calls callback for each digit of the number
  * @param callback code to be executed for each digit
  */
-fun Int.forEachDigit(callback: (Int) -> Unit) {
+fun Int.forEachOfTheThreeRightmostDigits(callback: (Int) -> Unit) {
     var number = this
+    var count = 0
 
     do {
         callback(number % 10)
         number /= 10
-    } while (number > 0)
+        count++
+    } while (number > 0 && count < 3)
 }
 
 /**
@@ -341,7 +343,7 @@ fun roman(n: Int): String {
 
     // index will point to I, X, C and M
 
-    n.forEachDigit {
+    n.forEachOfTheThreeRightmostDigits {
         // I decided to add useless '+ 0' to
         // improve readability
         result = when {
@@ -354,7 +356,7 @@ fun roman(n: Int): String {
         index += 2
     }
 
-    return result
+    return "M".repeat(n / 1000) + result
 }
 
 /**
