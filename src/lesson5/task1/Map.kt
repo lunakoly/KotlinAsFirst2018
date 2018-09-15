@@ -3,7 +3,6 @@
 package lesson5.task1
 
 import lesson4.task1.mean
-import java.util.function.BiPredicate
 
 /**
  * Пример
@@ -243,11 +242,11 @@ fun propagateHandshakes(friends: Map<String, Set<String>>): Map<String, Set<Stri
 
     friends.forEach { key, value ->
         if (key !in result)
-            result[key] = getReachableNodes(key, friends)
+            result[key] = getReachableNodes(key, friends).toSortedSet()
 
         value.forEach {
             if (it !in result)
-                result[it] = getReachableNodes(it, friends)
+                result[it] = getReachableNodes(it, friends).toSortedSet()
         }
     }
 
@@ -278,7 +277,7 @@ fun subtractOf(a: MutableMap<String, String>, b: Map<String, String>) {
  *
  * Для двух списков людей найти людей, встречающихся в обоих списках
  */
-fun whoAreInBoth(a: List<String>, b: List<String>): List<String> = a.filter { it in b }
+fun whoAreInBoth(a: List<String>, b: List<String>): List<String> = a.filter { it in b }.toSet().toList()
 
 /**
  * Средняя
@@ -289,7 +288,10 @@ fun whoAreInBoth(a: List<String>, b: List<String>): List<String> = a.filter { it
  * Например:
  *   canBuildFrom(listOf('a', 'b', 'o'), "baobab") -> true
  */
-fun canBuildFrom(chars: List<Char>, word: String): Boolean = word.all { it in chars }
+fun canBuildFrom(chars: List<Char>, word: String): Boolean {
+    val lowerChars = chars.map { it.toLowerCase() }
+    return word.toLowerCase().all { it in lowerChars }
+}
 
 /**
  * Средняя
@@ -350,14 +352,14 @@ fun hasAnagrams(words: List<String>): Boolean {
  *   findSumOfTwo(listOf(1, 2, 3), 6) -> Pair(-1, -1)
  */
 fun findSumOfTwo(list: List<Int>, number: Int): Pair<Int, Int> {
-    val optimized = list.filter { it < number } .sorted()
+    for (i in 0 until list.size - 1) {
+        if (list[i] > number) continue
 
-    for (i in 0 until optimized.size - 1) {
-        for (j in i + 1 until optimized.size) {
-            if (optimized[i] + optimized[j] == number)
+        for (j in i + 1 until list.size) {
+            if (list[j] > number) continue
+
+            if (list[i] + list[j] == number)
                 return Pair(i, j)
-            else if (optimized[i] + optimized[j] > number)
-                break
         }
     }
 
@@ -405,5 +407,5 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
         }
     }
 
-    return canTake
+    return canTake.toSortedSet()
 }
