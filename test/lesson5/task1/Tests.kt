@@ -291,6 +291,19 @@ class Tests {
         assertFalse(hasAnagrams(emptyList()))
         assertTrue(hasAnagrams(listOf("рот", "свет", "тор")))
         assertFalse(hasAnagrams(listOf("рот", "свет", "код", "дверь")))
+        assertFalse(hasAnagrams(listOf(
+                "",
+                "\"`GB<~/Fd\\;&Sh<IF9h_:\$k;iWy!~XX-e)MQv}PBn%TG? Lz@1M91NtX2V'`!?5^A_,M))!e%HPKXsg+hk.F",
+                "\"",
+                "2+-o6l.t$99OM]:\"d6",
+                "2cu'<S =E\$_S$",
+                "7",
+                "b-i<",
+                "^Q*b/szrdKS%o5G@<m3yDQ",
+                "CT:BBXfk5v1%+S,OTL{04$6iy(3R\"mi9V6-7(vWlR,(_+3o%*!NZ1FRtjx",
+                "64@)j*6\\ewu*",
+                "a\"dQ5\t}VHW=Y?!H6)L2?js8 u0TuW6`?5omEVB\n5>K+8Se Y7rC'jEvJ1e4G@\"`B<v@)kd :Py]zKC[Pd;\\122~O{wOZ,V/hIm&py5@R\n(\"(3YK|T0xW&E=_hKqvQbJg)_{FM&T:nP35H,DPP:3[Q_\"Q!H~Pj"
+        )))
     }
 
     @Test

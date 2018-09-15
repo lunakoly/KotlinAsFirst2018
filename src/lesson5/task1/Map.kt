@@ -327,10 +327,13 @@ fun extractRepeats(list: List<String>): Map<String, Int> {
  *   hasAnagrams(listOf("тор", "свет", "рот")) -> true
  */
 fun hasAnagrams(words: List<String>): Boolean {
-    for (i in 0 until words.size - 1)
-        for (j in i + 1 until words.size)
-            if (canBuildFrom(words[i].toList(), words[j]))
+    val optimized = words.map { it.toList().sorted() }
+
+    for (i in 0 until optimized.size - 1)
+        for (j in i + 1 until optimized.size)
+            if (optimized[i] == optimized[j])
                 return true
+    
     return false
 }
 
@@ -401,7 +404,7 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
     // most valuable to the least
     // ones
     for (name in values) {
-        if (capacityLeft > treasures[name]!!.first) {
+        if (capacityLeft >= treasures[name]!!.first) {
             capacityLeft -= treasures[name]!!.second
             canTake.add(name)
         }
