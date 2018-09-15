@@ -2,6 +2,9 @@
 
 package lesson5.task1
 
+import lesson4.task1.mean
+import java.util.function.BiPredicate
+
 /**
  * Пример
  *
@@ -94,7 +97,16 @@ fun buildWordSet(text: List<String>): MutableSet<String> {
  *     mapOf("Emergency" to "911", "Police" to "02")
  *   ) -> mapOf("Emergency" to "112, 911", "Police" to "02")
  */
-fun mergePhoneBooks(mapA: Map<String, String>, mapB: Map<String, String>): Map<String, String> = TODO()
+fun mergePhoneBooks(mapA: Map<String, String>, mapB: Map<String, String>): Map<String, String> {
+    val result = mapA.toMutableMap()
+
+    mapB.forEach { key, value ->
+        if (value != result[key])
+            result[key] = if (key in result) result[key] + ", " + value else value
+    }
+
+    return  result
+}
 
 /**
  * Простая
@@ -106,7 +118,18 @@ fun mergePhoneBooks(mapA: Map<String, String>, mapB: Map<String, String>): Map<S
  *   buildGrades(mapOf("Марат" to 3, "Семён" to 5, "Михаил" to 5))
  *     -> mapOf(5 to listOf("Семён", "Михаил"), 3 to listOf("Марат"))
  */
-fun buildGrades(grades: Map<String, Int>): Map<Int, List<String>> = TODO()
+fun buildGrades(grades: Map<String, Int>): Map<Int, List<String>> {
+    val result = mutableMapOf<Int, MutableList<String>>()
+
+    grades.forEach { key, value ->
+        if (value !in result)
+            result[value] = mutableListOf()
+        result[value]?.add(key)
+    }
+
+    result.forEach { _, value -> value.sortDescending() }
+    return result.toSortedMap(compareBy { -it })
+}
 
 /**
  * Простая
@@ -118,7 +141,7 @@ fun buildGrades(grades: Map<String, Int>): Map<Int, List<String>> = TODO()
  *   containsIn(mapOf("a" to "z"), mapOf("a" to "z", "b" to "sweet")) -> true
  *   containsIn(mapOf("a" to "z"), mapOf("a" to "zee", "b" to "sweet")) -> false
  */
-fun containsIn(a: Map<String, String>, b: Map<String, String>): Boolean = TODO()
+fun containsIn(a: Map<String, String>, b: Map<String, String>): Boolean = a.all { (key, value) -> b[key] == value }
 
 /**
  * Средняя
@@ -130,7 +153,17 @@ fun containsIn(a: Map<String, String>, b: Map<String, String>): Boolean = TODO()
  *   averageStockPrice(listOf("MSFT" to 100.0, "MSFT" to 200.0, "NFLX" to 40.0))
  *     -> mapOf("MSFT" to 150.0, "NFLX" to 40.0)
  */
-fun averageStockPrice(stockPrices: List<Pair<String, Double>>): Map<String, Double> = TODO()
+fun averageStockPrice(stockPrices: List<Pair<String, Double>>): Map<String, Double> {
+    val result = mutableMapOf<String, MutableList<Double>>()
+
+    stockPrices.forEach { (key, value) ->
+        if (key !in result)
+            result[key] = mutableListOf()
+        result[key]?.add(value)
+    }
+
+    return result.mapValues { (_, value) -> mean(value) }
+}
 
 /**
  * Средняя
@@ -147,7 +180,35 @@ fun averageStockPrice(stockPrices: List<Pair<String, Double>>): Map<String, Doub
  *     "печенье"
  *   ) -> "Мария"
  */
-fun findCheapestStuff(stuff: Map<String, Pair<String, Double>>, kind: String): String? = TODO()
+fun findCheapestStuff(stuff: Map<String, Pair<String, Double>>, kind: String): String? = stuff
+        .filter { (_, data) -> data.first == kind }
+        .minBy  { (_, data) -> data.second }
+        ?.component1()
+
+/**
+ * Returns set of nodes reachable from the
+ * given one
+ * @param start the node to start searching from
+ * @param graph the thing used to determine
+ * the existence of an edge
+ */
+fun <T> getReachableNodes(start: T, graph: Map<T, Set<T>>): Set<T> {
+    val checked = mutableMapOf(start to true)
+    val stack = mutableSetOf(start)
+
+    while (stack.size > 0) {
+        val last = stack.last()
+        checked[last] = true
+        stack.remove(last)
+
+        graph[last]?.forEach {
+            if (it !in checked)
+                stack.add(it)
+        }
+    }
+
+    return checked.keys - start
+}
 
 /**
  * Сложная
@@ -173,7 +234,25 @@ fun findCheapestStuff(stuff: Map<String, Pair<String, Double>>, kind: String): S
  *          "Mikhail" to setOf("Sveta", "Marat")
  *        )
  */
-fun propagateHandshakes(friends: Map<String, Set<String>>): Map<String, Set<String>> = TODO()
+fun propagateHandshakes(friends: Map<String, Set<String>>): Map<String, Set<String>> {
+    val result = mutableMapOf<String, Set<String>>()
+
+    // It could've been written easier if
+    // we didn't need to include people with
+    // no friends into our map
+
+    friends.forEach { key, value ->
+        if (key !in result)
+            result[key] = getReachableNodes(key, friends)
+
+        value.forEach {
+            if (it !in result)
+                result[it] = getReachableNodes(it, friends)
+        }
+    }
+
+    return result
+}
 
 /**
  * Простая
@@ -189,14 +268,17 @@ fun propagateHandshakes(friends: Map<String, Set<String>>): Map<String, Set<Stri
  *   subtractOf(a = mutableMapOf("a" to "z"), mapOf("a" to "z"))
  *     -> a changes to mutableMapOf() aka becomes empty
  */
-fun subtractOf(a: MutableMap<String, String>, b: Map<String, String>): Unit = TODO()
+fun subtractOf(a: MutableMap<String, String>, b: Map<String, String>) {
+    val keysToRemove = a.keys.filter { b[it] == a[it] }
+    keysToRemove.forEach { a.remove(it) }
+}
 
 /**
  * Простая
  *
  * Для двух списков людей найти людей, встречающихся в обоих списках
  */
-fun whoAreInBoth(a: List<String>, b: List<String>): List<String> = TODO()
+fun whoAreInBoth(a: List<String>, b: List<String>): List<String> = a.filter { it in b }
 
 /**
  * Средняя
@@ -207,7 +289,7 @@ fun whoAreInBoth(a: List<String>, b: List<String>): List<String> = TODO()
  * Например:
  *   canBuildFrom(listOf('a', 'b', 'o'), "baobab") -> true
  */
-fun canBuildFrom(chars: List<Char>, word: String): Boolean = TODO()
+fun canBuildFrom(chars: List<Char>, word: String): Boolean = word.all { it in chars }
 
 /**
  * Средняя
@@ -221,7 +303,17 @@ fun canBuildFrom(chars: List<Char>, word: String): Boolean = TODO()
  * Например:
  *   extractRepeats(listOf("a", "b", "a")) -> mapOf("a" to 2)
  */
-fun extractRepeats(list: List<String>): Map<String, Int> = TODO()
+fun extractRepeats(list: List<String>): Map<String, Int> {
+    val elements = mutableMapOf<String, Int>()
+
+    list.forEach {
+        if (it !in elements)
+            elements[it] = 0
+        elements[it] = elements[it]!!.plus(1)
+    }
+
+    return elements.filterValues { it != 1 }
+}
 
 /**
  * Средняя
@@ -232,7 +324,13 @@ fun extractRepeats(list: List<String>): Map<String, Int> = TODO()
  * Например:
  *   hasAnagrams(listOf("тор", "свет", "рот")) -> true
  */
-fun hasAnagrams(words: List<String>): Boolean = TODO()
+fun hasAnagrams(words: List<String>): Boolean {
+    for (i in 0 until words.size - 1)
+        for (j in i + 1 until words.size)
+            if (canBuildFrom(words[i].toList(), words[j]))
+                return true
+    return false
+}
 
 /**
  * Сложная
@@ -251,7 +349,20 @@ fun hasAnagrams(words: List<String>): Boolean = TODO()
  *   findSumOfTwo(listOf(1, 2, 3), 4) -> Pair(0, 2)
  *   findSumOfTwo(listOf(1, 2, 3), 6) -> Pair(-1, -1)
  */
-fun findSumOfTwo(list: List<Int>, number: Int): Pair<Int, Int> = TODO()
+fun findSumOfTwo(list: List<Int>, number: Int): Pair<Int, Int> {
+    val optimized = list.filter { it < number } .sorted()
+
+    for (i in 0 until optimized.size - 1) {
+        for (j in i + 1 until optimized.size) {
+            if (optimized[i] + optimized[j] == number)
+                return Pair(i, j)
+            else if (optimized[i] + optimized[j] > number)
+                break
+        }
+    }
+
+    return Pair(-1, -1)
+}
 
 /**
  * Очень сложная
@@ -272,4 +383,27 @@ fun findSumOfTwo(list: List<Int>, number: Int): Pair<Int, Int> = TODO()
  *     450
  *   ) -> emptySet()
  */
-fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<String> = TODO()
+fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<String> {
+    // calculate relative value as price/weight
+    // and sort entries by that value
+    val values = treasures
+            .mapValues { (_, data) -> data.second / data.first }
+            .toList()
+            .sortedBy { (_, value) -> -value }
+            .map { (name, _) -> name }
+
+    val canTake = mutableSetOf<String>()
+    var capacityLeft = capacity
+
+    // check every item from the
+    // most valuable to the least
+    // ones
+    for (name in values) {
+        if (capacityLeft > treasures[name]!!.first) {
+            capacityLeft -= treasures[name]!!.second
+            canTake.add(name)
+        }
+    }
+
+    return canTake
+}
