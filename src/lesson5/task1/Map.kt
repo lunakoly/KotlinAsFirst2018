@@ -333,7 +333,7 @@ fun hasAnagrams(words: List<String>): Boolean {
         for (j in i + 1 until optimized.size)
             if (optimized[i] == optimized[j])
                 return true
-    
+
     return false
 }
 
@@ -410,5 +410,5 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
         }
     }
 
-    return canTake.toSortedSet()
+    return canTake
 }
