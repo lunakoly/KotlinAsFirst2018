@@ -392,7 +392,7 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
     // calculate relative value as price/weight
     // and sort entries by that value
     val values = treasures
-            .mapValues { (_, data) -> data.second / data.first }
+            .mapValues { (_, data) -> data.second / data.first.toDouble() }
             .toList()
             .sortedBy { (_, value) -> -value }
             .map { (name, _) -> name }
@@ -405,7 +405,7 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
     // ones
     for (name in values) {
         if (capacityLeft >= treasures[name]!!.first) {
-            capacityLeft -= treasures[name]!!.second
+            capacityLeft -= treasures[name]!!.first
             canTake.add(name)
         }
     }
