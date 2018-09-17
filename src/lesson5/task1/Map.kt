@@ -389,26 +389,62 @@ fun findSumOfTwo(list: List<Int>, number: Int): Pair<Int, Int> {
  *   ) -> emptySet()
  */
 fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<String> {
-    // calculate relative value as price/weight
-    // and sort entries by that value
-    val values = treasures
-            .mapValues { (_, data) -> data.second / data.first.toDouble() }
-            .toList()
-            .sortedBy { (_, value) -> -value }
-            .map { (name, _) -> name }
+    // it's merely easier to use
+    val things = treasures.keys.toList()
+    val coasts = treasures.values.map { it.second }
+    val weights = treasures.values.map { it.first }
 
-    val canTake = mutableSetOf<String>()
-    var capacityLeft = capacity
+    // define 'price' as sum of 'coasts'
+    // of [n] first items with total weight
+    // of [w]
+    val price = mutableListOf(
+            IntArray(capacity + 1) { 0 }
+    )
 
-    // check every item from the
-    // most valuable to the least
-    // ones
-    for (name in values) {
-        if (capacityLeft >= treasures[name]!!.first) {
-            capacityLeft -= treasures[name]!!.first
-            canTake.add(name)
+    // used to find out what items
+    // will have been taken
+    val taken = mutableListOf(
+            BooleanArray(capacity + 1) { false }
+    )
+
+    // for n first items
+    for (n in 0 until things.size) {
+        taken.add(BooleanArray(capacity + 1) { false })
+        price.add(IntArray(capacity + 1) { 0 })
+
+        // calculate prices for corresponding
+        // weights
+        for (weight in 0..capacity) {
+            // select max of
+            // price[n][weight] and
+            // price[n][weight - weights[n]] + coasts[n]
+            if (price[n + 1][weight] < price[n][weight]) {
+                price[n + 1][weight] = price[n][weight]
+                taken[n + 1][weight] = false
+            }
+            if (weights[n] <= weight)
+                if (price[n + 1][weight] < price[n][weight - weights[n]] + coasts[n]) {
+                    price[n + 1][weight] = price[n][weight - weights[n]] + coasts[n]
+                    taken[n + 1][weight] = true
+                }
         }
     }
 
-    return canTake
+    val result = mutableSetOf<String>()
+    var bestPriceWeight = 0
+
+    // find weight with max price
+    for (weight in 0..capacity)
+        if (price[things.size][bestPriceWeight] < price[things.size][weight])
+            bestPriceWeight = weight
+
+    // grab items together
+    for (it in things.size downTo 0) {
+        if (taken[it][bestPriceWeight]) {
+            result.add(things[it - 1])
+            bestPriceWeight -= weights[it - 1]
+        }
+    }
+
+    return result
 }
