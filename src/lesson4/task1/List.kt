@@ -238,16 +238,6 @@ fun convert(n: Int, base: Int): List<Int> {
 }
 
 /**
- * Signs used to represent values of
- * base < 37 numbers
- */
-val ALPHABET = listOf(
-        'a', 'b', 'c', 'd', 'e', 'f', 'g',
-        'h', 'i', 'j', 'k', 'l', 'm', 'n',
-        'o', 'p', 'q', 'r', 's', 't', 'u',
-        'v', 'w', 'x', 'y', 'z')
-
-/**
  * Сложная
  *
  * Перевести заданное целое число n >= 0 в систему счисления с основанием 1 < base < 37.
@@ -261,7 +251,7 @@ fun convertToString(n: Int, base: Int): String {
 
     do {
         val sign = number % base
-        transformed += if (sign < 10) sign.toString() else ALPHABET[sign - 10]
+        transformed += if (sign < 10) sign.toString() else ('a' + (sign - 10))
         number /= base
     } while (number > 0)
 
@@ -301,7 +291,7 @@ fun decimalFromString(str: String, base: Int): Int {
     var factor = 1
 
     str.reversed().forEach {
-        val sign = if (it <= '9') it - '0' else ALPHABET.indexOf(it) + 10
+        val sign = if (it <= '9') it - '0' else (it.toLowerCase() - 'a' + 10)
         result += sign * factor
         factor *= base
     }

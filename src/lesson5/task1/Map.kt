@@ -2,8 +2,6 @@
 
 package lesson5.task1
 
-import lesson4.task1.mean
-
 /**
  * Пример
  *
@@ -96,16 +94,10 @@ fun buildWordSet(text: List<String>): MutableSet<String> {
  *     mapOf("Emergency" to "911", "Police" to "02")
  *   ) -> mapOf("Emergency" to "112, 911", "Police" to "02")
  */
-fun mergePhoneBooks(mapA: Map<String, String>, mapB: Map<String, String>): Map<String, String> {
-    val result = mapA.toMutableMap()
-
-    mapB.forEach { key, value ->
-        if (value != result[key])
-            result[key] = if (key in result) result[key] + ", " + value else value
-    }
-
-    return  result
-}
+fun mergePhoneBooks(mapA: Map<String, String>, mapB: Map<String, String>): Map<String, String> =
+        (mapA.entries + mapB.entries)
+            .groupBy { it.key }
+            .mapValues { (_, value) -> value.joinToString(", ") { it.value } }
 
 /**
  * Простая
@@ -117,18 +109,11 @@ fun mergePhoneBooks(mapA: Map<String, String>, mapB: Map<String, String>): Map<S
  *   buildGrades(mapOf("Марат" to 3, "Семён" to 5, "Михаил" to 5))
  *     -> mapOf(5 to listOf("Семён", "Михаил"), 3 to listOf("Марат"))
  */
-fun buildGrades(grades: Map<String, Int>): Map<Int, List<String>> {
-    val result = mutableMapOf<Int, MutableList<String>>()
-
-    grades.forEach { key, value ->
-        if (value !in result)
-            result[value] = mutableListOf()
-        result[value]?.add(key)
-    }
-
-    result.forEach { _, value -> value.sortDescending() }
-    return result.toSortedMap(compareBy { -it })
-}
+fun buildGrades(grades: Map<String, Int>): Map<Int, List<String>> = grades.entries
+        .map { it.key }
+        .groupBy { grades[it]!! }
+        .mapValues { (_, value) -> value.sortedDescending() }
+        .toSortedMap(compareBy { -it })
 
 /**
  * Простая
@@ -152,17 +137,12 @@ fun containsIn(a: Map<String, String>, b: Map<String, String>): Boolean = a.all 
  *   averageStockPrice(listOf("MSFT" to 100.0, "MSFT" to 200.0, "NFLX" to 40.0))
  *     -> mapOf("MSFT" to 150.0, "NFLX" to 40.0)
  */
-fun averageStockPrice(stockPrices: List<Pair<String, Double>>): Map<String, Double> {
-    val result = mutableMapOf<String, MutableList<Double>>()
-
-    stockPrices.forEach { (key, value) ->
-        if (key !in result)
-            result[key] = mutableListOf()
-        result[key]?.add(value)
-    }
-
-    return result.mapValues { (_, value) -> mean(value) }
-}
+fun averageStockPrice(stockPrices: List<Pair<String, Double>>): Map<String, Double> = stockPrices
+        .groupingBy { it.first }
+        // store (elementsSum, elementsCount) then sum / count
+        .fold(0.0 to 0) { accumulator, element ->
+            (accumulator.first + element.second) to (accumulator.second + 1) }
+        .mapValues { (_, value) -> value.first / value.second }
 
 /**
  * Средняя
@@ -267,10 +247,7 @@ fun propagateHandshakes(friends: Map<String, Set<String>>): Map<String, Set<Stri
  *   subtractOf(a = mutableMapOf("a" to "z"), mapOf("a" to "z"))
  *     -> a changes to mutableMapOf() aka becomes empty
  */
-fun subtractOf(a: MutableMap<String, String>, b: Map<String, String>) {
-    val keysToRemove = a.keys.filter { b[it] == a[it] }
-    keysToRemove.forEach { a.remove(it) }
-}
+fun subtractOf(a: MutableMap<String, String>, b: Map<String, String>) = a.keys.removeIf { b[it] == a[it] }
 
 /**
  * Простая
@@ -305,17 +282,10 @@ fun canBuildFrom(chars: List<Char>, word: String): Boolean {
  * Например:
  *   extractRepeats(listOf("a", "b", "a")) -> mapOf("a" to 2)
  */
-fun extractRepeats(list: List<String>): Map<String, Int> {
-    val elements = mutableMapOf<String, Int>()
-
-    list.forEach {
-        if (it !in elements)
-            elements[it] = 0
-        elements[it] = elements[it]!!.plus(1)
-    }
-
-    return elements.filterValues { it != 1 }
-}
+fun extractRepeats(list: List<String>): Map<String, Int> = list
+        .groupingBy { it }
+        .eachCount()
+        .filterValues { it != 1 }
 
 /**
  * Средняя
@@ -355,18 +325,35 @@ fun hasAnagrams(words: List<String>): Boolean {
  *   findSumOfTwo(listOf(1, 2, 3), 6) -> Pair(-1, -1)
  */
 fun findSumOfTwo(list: List<Int>, number: Int): Pair<Int, Int> {
-    for (i in 0 until list.size - 1) {
-        if (list[i] > number) continue
+    if (list.isEmpty())
+        return -1 to -1
 
-        for (j in i + 1 until list.size) {
-            if (list[j] > number) continue
+    // Idea:
+    // [0, 1, 2, ... 13, 14, 15]
+    //  ^i                   ^j
+    //  ------->       <-------
+    // until they meet
 
-            if (list[i] + list[j] == number)
-                return Pair(i, j)
+    val sorted = list
+            .mapIndexed { index, it -> it to index }
+            .sortedBy { it.first }
+    var j = list.size - 1
+    var i = 0
+
+    // So the list must be sorted
+    // 'sorted' contains pairs (value, indexInOriginalList)
+
+    while (i != j) {
+        val sum = sorted[i].first + sorted[j].first
+
+        when {
+            sum == number -> return sorted[i].second to sorted[j].second
+            sum < number -> i++
+            else -> j--
         }
     }
 
-    return Pair(-1, -1)
+    return -1 to -1
 }
 
 /**
@@ -391,7 +378,7 @@ fun findSumOfTwo(list: List<Int>, number: Int): Pair<Int, Int> {
 fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<String> {
     // it's merely easier to use
     val things = treasures.keys.toList()
-    val coasts = treasures.values.map { it.second }
+    val costs = treasures.values.map { it.second }
     val weights = treasures.values.map { it.first }
 
     // define 'price' as sum of 'coasts'
@@ -423,8 +410,8 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
                 taken[n + 1][weight] = false
             }
             if (weights[n] <= weight)
-                if (price[n + 1][weight] < price[n][weight - weights[n]] + coasts[n]) {
-                    price[n + 1][weight] = price[n][weight - weights[n]] + coasts[n]
+                if (price[n + 1][weight] < price[n][weight - weights[n]] + costs[n]) {
+                    price[n + 1][weight] = price[n][weight - weights[n]] + costs[n]
                     taken[n + 1][weight] = true
                 }
         }
@@ -437,7 +424,7 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
     for (weight in 0..capacity)
         if (price[things.size][bestPriceWeight] < price[things.size][weight])
             bestPriceWeight = weight
-
+    
     // grab items together
     for (it in things.size downTo 0) {
         if (taken[it][bestPriceWeight]) {
