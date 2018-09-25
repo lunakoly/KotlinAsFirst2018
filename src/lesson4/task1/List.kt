@@ -317,7 +317,7 @@ fun Int.forEachOfTheThreeRightmostDigits(callback: (Int) -> Unit) {
 /**
  * Merely Roman digits in their increment order
  */
-val ROMAN_SIGNS = listOf('I', 'V', 'X', 'L', 'C', 'D', 'M')
+val ROMAN_SIGNS = listOf("I", "V", "X", "L", "C", "D", "M")
 
 /**
  * Сложная
@@ -337,11 +337,11 @@ fun roman(n: Int): String {
         // I decided to add useless '+ 0' to
         // improve readability
         result = when {
-            it < 4  -> ROMAN_SIGNS[index + 0].toString().repeat(it)
-            it == 4 -> ROMAN_SIGNS[index + 0].toString() + ROMAN_SIGNS[index + 1]
-            it < 9  -> ROMAN_SIGNS[index + 1].toString() + ROMAN_SIGNS[index + 0].toString().repeat(it - 5)
-            it == 9 -> ROMAN_SIGNS[index + 0].toString() + ROMAN_SIGNS[index + 2]
-            else    -> ROMAN_SIGNS[index + 2].toString()
+            it < 4  -> ROMAN_SIGNS[index + 0].repeat(it)
+            it == 4 -> ROMAN_SIGNS[index + 0] + ROMAN_SIGNS[index + 1]
+            it < 9  -> ROMAN_SIGNS[index + 1] + ROMAN_SIGNS[index + 0].repeat(it - 5)
+            it == 9 -> ROMAN_SIGNS[index + 0] + ROMAN_SIGNS[index + 2]
+            else    -> ROMAN_SIGNS[index + 2]
         } + result
         index += 2
     }

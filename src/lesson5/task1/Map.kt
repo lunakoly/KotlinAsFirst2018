@@ -424,7 +424,7 @@ fun bagPacking(treasures: Map<String, Pair<Int, Int>>, capacity: Int): Set<Strin
     for (weight in 0..capacity)
         if (price[things.size][bestPriceWeight] < price[things.size][weight])
             bestPriceWeight = weight
-    
+
     // grab items together
     for (it in things.size downTo 0) {
         if (taken[it][bestPriceWeight]) {
