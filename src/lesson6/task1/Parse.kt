@@ -365,6 +365,10 @@ fun firstDuplicateIndex(str: String): Int {
         }
     }
 
+    if (word.isNotEmpty())
+        if (word.toLowerCase() == prevWord)
+            return prevStart
+
     return -1
 }
 
