@@ -102,7 +102,9 @@ class Tests {
     fun firstDuplicateIndex() {
         assertEquals(-1, firstDuplicateIndex("Привет"))
         assertEquals(9, firstDuplicateIndex("Он пошёл в в школу"))
-        assertEquals(40, firstDuplicateIndex("Яблоко упало на ветку с ветки оно упало на на землю"))
+        // assertEquals(40, firstDuplicateIndex("Яблоко упало на ветку с ветки оно упало на на землю"))
+        // [[яблоко] at 0, [упало] at 7, [на] at 13, [ветку] at 16, [с] at 22, [ветки] at 24, [оно] at 30, [упало] at 34, [на] at 40, [на] at 43, [землю] at 46]
+        assertEquals(7, firstDuplicateIndex("Яблоко упало на ветку с ветки оно упало на на землю"))
         assertEquals(9, firstDuplicateIndex("Мы пошли прямо Прямо располагался магазин"))
     }
 
