@@ -107,6 +107,7 @@ class Tests {
         assertEquals(9, firstDuplicateIndex("Он пошёл в в школу"))
         assertEquals(40, firstDuplicateIndex("Яблоко упало на ветку с ветки оно упало на на землю"))
         assertEquals(9, firstDuplicateIndex("Мы пошли прямо Прямо располагался магазин"))
+        assertEquals(0, firstDuplicateIndex("` ` C , u B P ( 3 U b \$ B . U ~ b ' ) q e S @ a o y q M r P { j K 9 d y [ p ^ q I + S F p i K G \\\\ : B 8 M 8 B h # V , c * \$ z j 3 { ^ A S ! b W X P N 0 v % Q Z m + 8 % j C X = : ~ > # { o J 7 V 6 O 4 q \$ T { 8 | \\\\ s o O 4 1 # C 2 t g ( 5 1 W 2 b k I q d ^ 3 , d x b ? C @ L 4 H U 1 g h q k @"))
     }
 
     @Test

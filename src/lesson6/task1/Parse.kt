@@ -109,7 +109,7 @@ val MONTHS = listOf(
  */
 fun dateStrToDigit(str: String): String {
     return try {
-        if (!Regex("^[0-9]{1,2} \\S+ [0-9]{1,4}$").containsMatchIn(str))
+        if (!Regex("^[0-9]{1,2} \\S+ [0-9]+$").containsMatchIn(str))
             throw Exception()
 
         val (day, year) = extract<Int>(str)
@@ -137,7 +137,7 @@ fun dateStrToDigit(str: String): String {
  */
 fun dateDigitToStr(digital: String): String {
     return try {
-        if (!Regex("^[0-9]{2}.[0-9]{2}.[0-9]{1,4}$").containsMatchIn(digital))
+        if (!Regex("^[0-9]{2}.[0-9]{2}.[0-9]+$").containsMatchIn(digital))
             throw Exception()
 
         val (day, month, year) = extract<Int>(digital, '.')
@@ -344,9 +344,9 @@ fun plusMinus(expression: String): Int {
  * Пример: "Он пошёл в в школу" => результат 9 (индекс первого 'в')
  */
 fun firstDuplicateIndex(str: String): Int {
-    var prevStart = -1
+    var prevStart = 0
     var prevWord = ""
-    var start = -1
+    var start = 0
     var word = ""
 
     for (it in 0 until str.length) {
@@ -365,7 +365,7 @@ fun firstDuplicateIndex(str: String): Int {
         }
     }
 
-    return prevStart
+    return -1
 }
 
 /**
