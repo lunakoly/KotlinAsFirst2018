@@ -109,7 +109,7 @@ val MONTHS = listOf(
  */
 fun dateStrToDigit(str: String): String {
     return try {
-        if (!Regex("^[0-9]{1,2} \\S+ [0-9]{4}$").containsMatchIn(str))
+        if (!Regex("^[0-9]{1,2} \\S+ [0-9]{1,4}$").containsMatchIn(str))
             throw Exception()
 
         val (day, year) = extract<Int>(str)
@@ -137,7 +137,7 @@ fun dateStrToDigit(str: String): String {
  */
 fun dateDigitToStr(digital: String): String {
     return try {
-        if (!Regex("^[0-9]{2}.[0-9]{2}.[0-9]{4}$").containsMatchIn(digital))
+        if (!Regex("^[0-9]{2}.[0-9]{2}.[0-9]{1,4}$").containsMatchIn(digital))
             throw Exception()
 
         val (day, month, year) = extract<Int>(digital, '.')
@@ -312,10 +312,19 @@ fun plusMinus(expression: String): Int {
                         if (it.firstOrNull() == '+' || it.firstOrNull() == '-')
                             throw IllegalArgumentException()
 
+                        // try parse Int
+                        val operand: Int
+
+                        try {
+                            operand = it.toInt()
+                        } catch (e: Exception) {
+                            throw IllegalArgumentException()
+                        }
+
                         when (state) {
                             "" -> throw IllegalArgumentException()
-                            "+" -> result += it.toInt()
-                            "-" -> result -= it.toInt()
+                            "+" -> result += operand
+                            "-" -> result -= operand
                         }
                         state = ""
                     }
@@ -335,14 +344,19 @@ fun plusMinus(expression: String): Int {
  * Пример: "Он пошёл в в школу" => результат 9 (индекс первого 'в')
  */
 fun firstDuplicateIndex(str: String): Int {
-    val tokens = mutableListOf<Pair<String, Int>>()
-    var start = 0
+    var prevStart = -1
+    var prevWord = ""
+    var start = -1
     var word = ""
 
     for (it in 0 until str.length) {
         if (str[it] == ' ') {
             if (word.isNotEmpty()) {
-                tokens.add(word.toLowerCase() to start)
+                if (word.toLowerCase() == prevWord)
+                    return prevStart
+
+                prevStart = start
+                prevWord = word.toLowerCase()
                 word = ""
             }
             start = it + 1
@@ -351,17 +365,7 @@ fun firstDuplicateIndex(str: String): Int {
         }
     }
 
-    if (word.isNotEmpty())
-        tokens.add(word to start)
-
-    println(tokens.map { "[${it.first}] at ${it.second}" })
-
-    val repeatingGroup = tokens
-            .groupBy { it.first }
-            .values
-            .firstOrNull { it.size > 1 } ?: return -1
-
-    return repeatingGroup.first().second
+    return prevStart
 }
 
 /**
@@ -410,6 +414,9 @@ fun mostExpensive(description: String): String {
  */
 fun fromRoman(roman: String): Int {
     try {
+        if (roman.isEmpty())
+            throw Exception()
+
         var result = 0
         var it = 0
 
@@ -539,10 +546,6 @@ fun computeDeviceCells(cells: Int, commands: String, limit: Int): List<Int> {
 
 
     while (commandsRead < limit && caret < commands.length) {
-        // index out of bounds
-        if (position < 0 || position >= tape.size)
-            throw IllegalStateException()
-
         val command = commands[caret]
 
         when (command) {
@@ -588,6 +591,10 @@ fun computeDeviceCells(cells: Int, commands: String, limit: Int): List<Int> {
 
         caret++
         commandsRead++
+
+        // index out of bounds
+        if (position < 0 || position >= tape.size)
+            throw IllegalStateException()
     }
 
     return tape.toList()
