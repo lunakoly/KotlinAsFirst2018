@@ -54,8 +54,12 @@ fun alignFile(inputName: String, lineLength: Int, outputName: String) {
  * Регистр букв игнорировать, то есть буквы е и Е считать одинаковыми.
  *
  */
-fun countSubstrings(inputName: String, substrings: List<String>): Map<String, Int> = TODO()
-
+fun countSubstrings(inputName: String, substrings: List<String>): Map<String, Int> {
+    val text = File(inputName).readText()
+    return substrings
+            .groupBy { it }
+            .mapValues { it.key.toRegex(RegexOption.IGNORE_CASE).findAll(text).toSet().size }
+}
 
 /**
  * Средняя
@@ -71,7 +75,22 @@ fun countSubstrings(inputName: String, substrings: List<String>): Map<String, In
  *
  */
 fun sibilants(inputName: String, outputName: String) {
-    TODO()
+    // it's VERY STRANGE to replace "жа" with "жя"
+    val text = File(inputName).readText()
+
+    File(outputName)
+            .writeText(
+                text.replace(Regex("""([жчшщ])([ыяю])""", RegexOption.IGNORE_CASE)) {
+                    val char = it.groupValues[2][0]
+
+                    it.groupValues[1] + when (char.toLowerCase()) {
+                        'ы' -> char - 19
+                        'я' -> char - 31
+                        'ю' -> char - 11
+                        else -> ""
+                    }
+                }
+            )
 }
 
 /**
@@ -92,7 +111,15 @@ fun sibilants(inputName: String, outputName: String) {
  *
  */
 fun centerFile(inputName: String, outputName: String) {
-    TODO()
+    val lines = File(inputName).readLines()
+    val maxLength = lines.map { it.length }.max() ?: 0
+
+    File(outputName)
+            .writeText(
+                    lines.joinToString("\n") {
+                        " ".repeat((maxLength - it.trim().length) / 2) + it.trim()
+                    }
+            )
 }
 
 /**
@@ -123,7 +150,43 @@ fun centerFile(inputName: String, outputName: String) {
  * 8) Если входной файл удовлетворяет требованиям 1-7, то он должен быть в точности идентичен выходному файлу
  */
 fun alignFileByWidth(inputName: String, outputName: String) {
-    TODO()
+    val lines = File(inputName).readLines()
+            .map { it.trim().replace(Regex("""\s+"""), " ") }
+
+    val maxLength = lines
+            .map { it.length }
+            .max() ?: 0
+
+    File(outputName)
+            .writeText(
+                    lines.joinToString("\n") {
+                        val words = it.split(" ")
+
+                        if (words.size <= 1)
+                            return@joinToString it
+
+                        var contentSpaceLeft = words.fold(0) { old, new -> old + new.length } - words.last().length
+                        var freeSpaceLeft = maxLength - words.last().length
+                        var out = words.last()
+
+                        // word word word word
+                        //               |____|
+                        //                read
+                        //|______________|
+                        // 2 spaces for 3 words left
+
+                        for (i in words.size - 2 downTo 0) {
+                            // i + 1 = wordsLeft - 1
+                            val spacesPerPair = (freeSpaceLeft - contentSpaceLeft) / (i + 1)
+
+                            freeSpaceLeft -= words[i].length + spacesPerPair
+                            contentSpaceLeft -= words[i].length
+                            out = words[i] + " ".repeat(spacesPerPair) + out
+                        }
+
+                        out
+                    }
+            )
 }
 
 /**
@@ -144,7 +207,38 @@ fun alignFileByWidth(inputName: String, outputName: String) {
  * Ключи в ассоциативном массиве должны быть в нижнем регистре.
  *
  */
-fun top20Words(inputName: String): Map<String, Int> = TODO()
+fun top20Words(inputName: String): Map<String, Int> {
+    val aWord = Regex("""([a-zA-Zа-яА-ЯёЁ]+)""", RegexOption.IGNORE_CASE)
+
+    val words = aWord
+            .findAll(File(inputName).readText())
+            .groupingBy { it.value.toLowerCase() }
+            .eachCount()
+
+    return words.keys
+            .sortedByDescending { words[it] }
+            .filter { words[it]!! > 1 }
+            .take(20)
+            .associateBy({ it }, { words[it] ?: 0 })
+}
+
+/**
+ * Modulates the letter case according to another string
+ * `("thesuperbob", "aaaAaaaaAAA") -> "theSuperBOB"`
+ *
+ * This function could have been used in sibilants() and
+ * transliterate() if they had a bit different task
+ * I decided to leave it here in case I'll ever need it
+ *
+ * @param source the string to be modulated
+ * @param pattern the rule for the modulation
+ */
+@Suppress("unused")
+fun modulate(source: String, pattern: String): String {
+    return source.mapIndexed { index, it ->
+        it + if (index < pattern.length) (pattern[index] - pattern[index].toLowerCase()) else 0
+    }.joinToString("")
+}
 
 /**
  * Средняя
@@ -182,7 +276,22 @@ fun top20Words(inputName: String): Map<String, Int> = TODO()
  * Обратите внимание: данная функция не имеет возвращаемого значения
  */
 fun transliterate(inputName: String, dictionary: Map<Char, String>, outputName: String) {
-    TODO()
+    val regex = dictionary.keys.joinToString("|").toRegex(RegexOption.IGNORE_CASE)
+    val lowerCaseDictionary = dictionary
+            .mapValues { it.value.toLowerCase() }
+            .mapKeys { it.key.toLowerCase() }
+
+    val text = File(inputName).readText().replace(regex) {
+        val value = lowerCaseDictionary[it.value[0].toLowerCase()] ?: ""
+
+        if (it.value[0].toLowerCase() == it.value[0])
+            value
+        else
+            value[0].toUpperCase() + value.substring(1)
+    }
+
+    println(text)
+    File(outputName).writeText(text)
 }
 
 /**
@@ -210,7 +319,48 @@ fun transliterate(inputName: String, dictionary: Map<Char, String>, outputName: 
  * Обратите внимание: данная функция не имеет возвращаемого значения
  */
 fun chooseLongestChaoticWord(inputName: String, outputName: String) {
-    TODO()
+    lateinit var words: MutableList<String>
+    var maxLength = -1
+
+    File(inputName).readLines().forEach {
+        val repetitions = mutableMapOf<Char, Boolean>()
+
+        // if has repeating chars
+        for (char in it) {
+            if (repetitions[char.toLowerCase()] != null)
+                return@forEach
+            else
+                repetitions[char.toLowerCase()] = true
+        }
+
+        // add
+        when {
+            it.length > maxLength -> {
+                words = mutableListOf(it)
+                maxLength = it.length
+            }
+
+            it.length == maxLength -> {
+                words.add(it)
+            }
+
+            else -> {}
+        }
+    }
+
+    File(outputName).writeText(words.joinToString(", "))
+}
+
+fun accept(symbol: Char, source: String, index: Int): Boolean {
+    return index < source.length && source[index] == symbol
+}
+
+fun accept(token: String, source: String, index: Int): Boolean {
+    token.forEachIndexed { offset, it ->
+        if (!accept(it, source, index + offset))
+            return false
+    }
+    return true
 }
 
 /**
@@ -257,7 +407,50 @@ Suspendisse ~~et elit in enim tempus iaculis~~.
  * (Отступы и переносы строк в примере добавлены для наглядности, при решении задачи их реализовывать не обязательно)
  */
 fun markdownToHtmlSimple(inputName: String, outputName: String) {
-    TODO()
+    val source = File(inputName).readText()
+    var index = 0
+
+    val contentStack = mutableListOf("")
+    val statesStack = mutableListOf<String>()
+
+    fun parseState(state: String, begin: String, end: String) {
+        if (statesStack.lastOrNull() == state) {
+            contentStack[contentStack.size - 2] += begin + contentStack.last() + end
+            contentStack.removeAt(contentStack.lastIndex)
+            statesStack.removeAt(statesStack.lastIndex)
+        } else {
+            statesStack.add(state)
+            contentStack.add("")
+        }
+    }
+
+    while (index < source.length) {
+        when {
+            accept("**", source, index) -> {
+                index += 2
+                parseState("bold", "<b>", "</b>")
+            }
+            accept('*', source, index) -> {
+                index++
+                parseState("italian", "<i>", "</i>")
+            }
+            accept("~~", source, index) -> {
+                index += 2
+                parseState("line-through", "<s>", "</s>")
+            }
+            accept("\n\r", source, index) -> {
+                index += 2
+                contentStack.add("")
+            }
+            else -> {
+                contentStack[contentStack.size - 1] = contentStack.last() + source[index]
+                index++
+            }
+        }
+    }
+
+    val text = contentStack.joinToString("") { "<p>$it</p>" }
+    File(outputName).writeText("<html><body>$text</body></html>")
 }
 
 /**
