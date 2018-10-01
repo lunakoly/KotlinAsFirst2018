@@ -177,19 +177,25 @@ fun flattenPhoneNumber(phone: String): String =
  * Прочитать строку и вернуть максимальное присутствующее в ней число (717 в примере).
  * При нарушении формата входной строки или при отсутствии в ней чисел, вернуть -1.
  */
-fun bestLongJump(jumps: String): Int =
-        if (Regex("""(?:\d+|[-% ])+""").matches(jumps))
-            jumps.split(Regex("""\s+"""))
-                    .map {
-                        try {
-                            it.toInt()
-                        } catch (e: Exception) {
-                            -1
-                        }
+fun bestLongJump(jumps: String): Int {
+    // fighting with regex stack overflow
+    val reduced = jumps
+            .replace(Regex("""[-%]"""), "")
+            .replace(Regex("""\s+"""), " ")
+
+    return if (Regex("""(?:\d+ *)+""").matches(reduced))
+        reduced.split(" ")
+                .map {
+                    try {
+                        it.toInt()
+                    } catch (e: Exception) {
+                        -1
                     }
-                    .max() ?: -1
-        else
-            -1
+                }
+                .max() ?: -1
+    else
+        -1
+}
 
 /**
  * Сложная
@@ -292,7 +298,7 @@ fun firstDuplicateIndex(str: String): Int {
  * Все цены должны быть больше либо равны нуля.
  */
 fun mostExpensive(description: String): String {
-    if (!Regex("""(?:[a-zA-Zа-яА-Я]+ \d+(?:\.\d+)?)(?:; [a-zA-Zа-яА-Я]+ \d+(?:\.\d+)?)*""").matches(description))
+    if (!Regex("""(?:\S+ \d+(?:\.\d+)?)(?:; \S+ \d+(?:\.\d+)?)*""").matches(description))
         return ""
 
     var theMostExpensivePrice = -1.0
