@@ -181,8 +181,9 @@ fun bestLongJump(jumps: String): Int {
     // fighting with regex stack overflow
     val reduced = jumps
             .replace(Regex("""[-%]"""), "")
+            .trim()
             .replace(Regex("""\s+"""), " ")
-
+    
     return if (Regex("""(?:\d+ *)+""").matches(reduced))
         reduced.split(" ")
                 .map {
