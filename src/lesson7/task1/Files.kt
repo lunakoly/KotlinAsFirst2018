@@ -111,13 +111,13 @@ fun sibilants(inputName: String, outputName: String) {
  *
  */
 fun centerFile(inputName: String, outputName: String) {
-    val lines = File(inputName).readLines()
+    val lines = File(inputName).readLines().map { it.trim() }
     val maxLength = lines.map { it.length }.max() ?: 0
 
     File(outputName)
             .writeText(
                     lines.joinToString("\n") {
-                        " ".repeat((maxLength - it.trim().length) / 2) + it.trim()
+                        " ".repeat((maxLength - it.length) / 2) + it
                     }
             )
 }
@@ -217,7 +217,6 @@ fun top20Words(inputName: String): Map<String, Int> {
 
     return words.keys
             .sortedByDescending { words[it] }
-            .filter { words[it]!! > 1 }
             .take(20)
             .associateBy({ it }, { words[it] ?: 0 })
 }
@@ -276,7 +275,10 @@ fun modulate(source: String, pattern: String): String {
  * Обратите внимание: данная функция не имеет возвращаемого значения
  */
 fun transliterate(inputName: String, dictionary: Map<Char, String>, outputName: String) {
-    val regex = dictionary.keys.joinToString("|").toRegex(RegexOption.IGNORE_CASE)
+    val regex = dictionary.keys
+            .joinToString("|") { Regex.escape(it.toString()) }
+            .toRegex(RegexOption.IGNORE_CASE)
+
     val lowerCaseDictionary = dictionary
             .mapValues { it.value.toLowerCase() }
             .mapKeys { it.key.toLowerCase() }
@@ -319,7 +321,7 @@ fun transliterate(inputName: String, dictionary: Map<Char, String>, outputName: 
  * Обратите внимание: данная функция не имеет возвращаемого значения
  */
 fun chooseLongestChaoticWord(inputName: String, outputName: String) {
-    lateinit var words: MutableList<String>
+    val words = mutableListOf<String>()
     var maxLength = -1
 
     File(inputName).readLines().forEach {
@@ -336,7 +338,8 @@ fun chooseLongestChaoticWord(inputName: String, outputName: String) {
         // add
         when {
             it.length > maxLength -> {
-                words = mutableListOf(it)
+                words.clear()
+                words.add(it)
                 maxLength = it.length
             }
 
@@ -407,50 +410,8 @@ Suspendisse ~~et elit in enim tempus iaculis~~.
  * (Отступы и переносы строк в примере добавлены для наглядности, при решении задачи их реализовывать не обязательно)
  */
 fun markdownToHtmlSimple(inputName: String, outputName: String) {
-    val source = File(inputName).readText()
-    var index = 0
-
-    val contentStack = mutableListOf("")
-    val statesStack = mutableListOf<String>()
-
-    fun parseState(state: String, begin: String, end: String) {
-        if (statesStack.lastOrNull() == state) {
-            contentStack[contentStack.size - 2] += begin + contentStack.last() + end
-            contentStack.removeAt(contentStack.lastIndex)
-            statesStack.removeAt(statesStack.lastIndex)
-        } else {
-            statesStack.add(state)
-            contentStack.add("")
-        }
-    }
-
-    while (index < source.length) {
-        when {
-            accept("**", source, index) -> {
-                index += 2
-                parseState("bold", "<b>", "</b>")
-            }
-            accept('*', source, index) -> {
-                index++
-                parseState("italian", "<i>", "</i>")
-            }
-            accept("~~", source, index) -> {
-                index += 2
-                parseState("line-through", "<s>", "</s>")
-            }
-            accept("\n\r", source, index) -> {
-                index += 2
-                contentStack.add("")
-            }
-            else -> {
-                contentStack[contentStack.size - 1] = contentStack.last() + source[index]
-                index++
-            }
-        }
-    }
-
-    val text = contentStack.joinToString("") { "<p>$it</p>" }
-    File(outputName).writeText("<html><body>$text</body></html>")
+    val result = MarkdownReader(File(inputName).readText()).toHtml()
+    File(outputName).writeText(result)
 }
 
 /**
@@ -547,7 +508,131 @@ fun markdownToHtmlSimple(inputName: String, outputName: String) {
  * (Отступы и переносы строк в примере добавлены для наглядности, при решении задачи их реализовывать не обязательно)
  */
 fun markdownToHtmlLists(inputName: String, outputName: String) {
-    TODO()
+    val lines = File(inputName).readLines()
+    var prevIndent = -1
+
+    val contentStack = mutableListOf<String>()
+    val statesStack = mutableListOf<String>()
+
+    // wrapping up lower lists
+    fun finalizeList() {
+        val tag = statesStack.lastOrNull() ?: ""
+        contentStack[contentStack.size - 2] += "<$tag><li>${contentStack[contentStack.size - 1]}</li></$tag>"
+        contentStack.removeAt(contentStack.lastIndex)
+        statesStack.removeAt(statesStack.lastIndex)
+    }
+
+    lines.forEach {
+        val indent = Regex("""^\s*""").find(it)?.value?.length ?: 0
+        val listTag = if (it.trimStart().startsWith('*')) "ul" else "ol"
+        val content = it.replace(Regex("""^\s*(?:\*|\d+\.)"""), "")
+
+        when {
+            indent > prevIndent -> {
+                statesStack.add(listTag)
+                contentStack.add(content)
+            }
+            indent == prevIndent -> {
+                contentStack[contentStack.size - 1] += "</li><li>$content"
+            }
+            else -> {
+                finalizeList()
+                contentStack[contentStack.size - 1] += "</li><li>$content"
+            }
+        }
+
+        prevIndent = indent
+    }
+
+    // adding a blank top-level item to
+    // simplify wrapping up the top-level list
+    statesStack.add(0, "")
+    contentStack.add(0, "")
+
+    // wrap up all nested lists
+    while (contentStack.size > 1)
+        finalizeList()
+
+    File(outputName).writeText("<html><body>" + contentStack.last() + "</body></html>")
+}
+
+open class TextReader(protected var source: String) {
+    protected var index = 0
+
+    protected fun accept(token: String): Boolean {
+        token.forEachIndexed { offset, it ->
+            if (source.getOrNull(index + offset) != it)
+                return false
+        }
+        index += token.length
+        return true
+    }
+}
+
+class MarkdownReader(source: String): TextReader(source) {
+    init {
+        // dos2unix
+        this.source = source.replace("\r\n", "\n")
+    }
+
+    private fun acceptPrimitive(terminator: String): String {
+        var result = ""
+        while (index < source.length) {
+            // this is the ideal solution from my point of view
+            // because if can automatically handle *** as
+            // b,i or i,b depending on the context (whether
+            // we need to close text or open)
+            // but the task said *** -> b,i ((9(
+
+//            result += when {
+//                accept(terminator) -> return result
+//                accept("**") -> "<b>" + acceptPrimitive("**") + "</b>"
+//                accept("~~") -> "<s>" + acceptPrimitive("~~") + "</s>"
+//                accept("*") -> "<i>" + acceptPrimitive("*") + "</i>"
+//                else -> source[index++]
+//            }
+
+            result += when {
+                accept("**") -> {
+                    if ("**" == terminator)
+                        return result
+                    "<b>" + acceptPrimitive("**") + "</b>"
+                }
+                accept("~~") -> {
+                    if ("~~" == terminator)
+                        return result
+                    "<s>" + acceptPrimitive("~~") + "</s>"
+                }
+                accept("*") -> {
+                    if ("*" == terminator)
+                        return result
+                    "<i>" + acceptPrimitive("*") + "</i>"
+                }
+                else -> source[index++]
+            }
+        }
+        return result
+    }
+
+    private fun acceptParagraph(): String {
+        var result = ""
+
+        while (index < source.length) {
+            result += when {
+                accept("\n\n") -> return result + "</p><p>" + acceptParagraph()
+                accept("~~") -> "<s>" + acceptPrimitive("~~") + "</s>"
+                accept("**") -> "<b>" + acceptPrimitive("**") + "</b>"
+                accept("*") -> "<i>" + acceptPrimitive("*") + "</i>"
+                else -> source[index++]
+            }
+        }
+
+        return result
+    }
+
+    fun toHtml(): String {
+        return "<html><body><p>" + acceptParagraph() + "</p></body></html>"
+    }
 }
 
 /**

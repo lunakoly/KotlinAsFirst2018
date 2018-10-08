@@ -183,7 +183,7 @@ fun bestLongJump(jumps: String): Int {
             .replace(Regex("""[-%]"""), "")
             .trim()
             .replace(Regex("""\s+"""), " ")
-    
+
     return if (Regex("""(?:\d+ *)+""").matches(reduced))
         reduced.split(" ")
                 .map {
@@ -273,7 +273,7 @@ fun plusMinus(expression: String): Int {
  */
 fun firstDuplicateIndex(str: String): Int {
     var index = 0
-    str.split(" ", ignoreCase = true)
+    str.split(" ")
             .map {
                 val out = it.toLowerCase() to index
                 index += it.length + 1
