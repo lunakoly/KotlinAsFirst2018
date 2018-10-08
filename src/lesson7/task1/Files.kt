@@ -508,56 +508,63 @@ fun markdownToHtmlSimple(inputName: String, outputName: String) {
  * (Отступы и переносы строк в примере добавлены для наглядности, при решении задачи их реализовывать не обязательно)
  */
 fun markdownToHtmlLists(inputName: String, outputName: String) {
-    val lines = File(inputName).readLines()
-    var prevIndent = -1
-
-    val contentStack = mutableListOf<String>()
-    val statesStack = mutableListOf<String>()
-
-    // wrapping up lower lists
-    fun finalizeList() {
-        val tag = statesStack.lastOrNull() ?: ""
-        contentStack[contentStack.size - 2] += "<$tag><li>${contentStack[contentStack.size - 1]}</li></$tag>"
-        contentStack.removeAt(contentStack.lastIndex)
-        statesStack.removeAt(statesStack.lastIndex)
-    }
-
-    lines.forEach {
-        val indent = Regex("""^\s*""").find(it)?.value?.length ?: 0
-        val listTag = if (it.trimStart().startsWith('*')) "ul" else "ol"
-        val content = it.replace(Regex("""^\s*(?:\*|\d+\.)"""), "")
-
-        when {
-            indent > prevIndent -> {
-                statesStack.add(listTag)
-                contentStack.add(content)
-            }
-            indent == prevIndent -> {
-                contentStack[contentStack.size - 1] += "</li><li>$content"
-            }
-            else -> {
-                finalizeList()
-                contentStack[contentStack.size - 1] += "</li><li>$content"
-            }
-        }
-
-        prevIndent = indent
-    }
-
-    // adding a blank top-level item to
-    // simplify wrapping up the top-level list
-    statesStack.add(0, "")
-    contentStack.add(0, "")
-
-    // wrap up all nested lists
-    while (contentStack.size > 1)
-        finalizeList()
-
-    File(outputName).writeText("<html><body>" + contentStack.last() + "</body></html>")
+    val result = MarkdownReader(File(inputName).readText()).toHtml()
+    File(outputName).writeText(result)
+//    val lines = File(inputName).readLines()
+//    var prevIndent = -1
+//
+//    val contentStack = mutableListOf<String>()
+//    val statesStack = mutableListOf<String>()
+//
+//    // wrapping up lower lists
+//    fun finalizeList() {
+//        val tag = statesStack.lastOrNull() ?: ""
+//        contentStack[contentStack.size - 2] += "<$tag><li>${contentStack[contentStack.size - 1]}</li></$tag>"
+//        contentStack.removeAt(contentStack.lastIndex)
+//        statesStack.removeAt(statesStack.lastIndex)
+//    }
+//
+//    lines.forEach {
+//        val indent = Regex("""^\s*""").find(it)?.value?.length ?: 0
+//        val listTag = if (it.trimStart().startsWith('*')) "ul" else "ol"
+//        val content = it.replace(Regex("""^\s*(?:\*|\d+\.)"""), "")
+//
+//        when {
+//            indent > prevIndent -> {
+//                statesStack.add(listTag)
+//                contentStack.add(content)
+//            }
+//            indent == prevIndent -> {
+//                contentStack[contentStack.size - 1] += "</li><li>$content"
+//            }
+//            else -> {
+//                finalizeList()
+//                contentStack[contentStack.size - 1] += "</li><li>$content"
+//            }
+//        }
+//
+//        prevIndent = indent
+//    }
+//
+//    // adding a blank top-level item to
+//    // simplify wrapping up the top-level list
+//    statesStack.add(0, "")
+//    contentStack.add(0, "")
+//
+//    // wrap up all nested lists
+//    while (contentStack.size > 1)
+//        finalizeList()
+//
+//    File(outputName).writeText("<html><body>" + contentStack.last() + "</body></html>")
 }
 
 open class TextReader(protected var source: String) {
     protected var index = 0
+
+    fun failAcception(backup: Int): Boolean {
+        index = backup
+        return false
+    }
 
     protected fun accept(token: String): Boolean {
         token.forEachIndexed { offset, it ->
@@ -570,12 +577,15 @@ open class TextReader(protected var source: String) {
 }
 
 class MarkdownReader(source: String): TextReader(source) {
+    private var lastReadIndent = 0
+    private var lastReadNumber = 0
+
     init {
         // dos2unix
         this.source = source.replace("\r\n", "\n")
     }
 
-    private fun acceptPrimitive(terminator: String): String {
+    private fun readPrimitive(terminator: String): String {
         var result = ""
         while (index < source.length) {
             // this is the ideal solution from my point of view
@@ -586,9 +596,9 @@ class MarkdownReader(source: String): TextReader(source) {
 
 //            result += when {
 //                accept(terminator) -> return result
-//                accept("**") -> "<b>" + acceptPrimitive("**") + "</b>"
-//                accept("~~") -> "<s>" + acceptPrimitive("~~") + "</s>"
-//                accept("*") -> "<i>" + acceptPrimitive("*") + "</i>"
+//                accept("**") -> "<b>" + readPrimitive("**") + "</b>"
+//                accept("~~") -> "<s>" + readPrimitive("~~") + "</s>"
+//                accept("*") -> "<i>" + readPrimitive("*") + "</i>"
 //                else -> source[index++]
 //            }
 
@@ -596,17 +606,17 @@ class MarkdownReader(source: String): TextReader(source) {
                 accept("**") -> {
                     if ("**" == terminator)
                         return result
-                    "<b>" + acceptPrimitive("**") + "</b>"
+                    "<b>" + readPrimitive("**") + "</b>"
                 }
                 accept("~~") -> {
                     if ("~~" == terminator)
                         return result
-                    "<s>" + acceptPrimitive("~~") + "</s>"
+                    "<s>" + readPrimitive("~~") + "</s>"
                 }
                 accept("*") -> {
                     if ("*" == terminator)
                         return result
-                    "<i>" + acceptPrimitive("*") + "</i>"
+                    "<i>" + readPrimitive("*") + "</i>"
                 }
                 else -> source[index++]
             }
@@ -614,24 +624,118 @@ class MarkdownReader(source: String): TextReader(source) {
         return result
     }
 
-    private fun acceptParagraph(): String {
+    private fun acceptNumber(): Boolean {
+        var isNumber = false
+        var number = 0
+
+        while (index < source.length && source[index] in '0'..'9') {
+            number = number * 10 + (source[index] - '0')
+            isNumber = true
+            index++
+        }
+
+        if (!isNumber)
+            return false
+
+        lastReadNumber = number
+        return true
+    }
+
+    private fun acceptUlList(): Boolean {
+        val backup = index
+        var indent = 0
+
+        while (index < source.length && accept(" "))
+            indent += 1
+
+        if (!accept("*"))
+            return failAcception(backup)
+
+        lastReadIndent = indent
+        return true
+    }
+
+    private fun acceptOlList(): Boolean {
+        val backup = index
+        var indent = 0
+
+        while (index < source.length && accept(" "))
+            indent += 1
+
+        if (!acceptNumber())
+            return failAcception(backup)
+
+        if (!accept("."))
+            return failAcception(backup)
+
+        lastReadIndent = indent
+        return true
+    }
+
+    private fun readList(type: String, level: Int): String {
+        var previous = '\n'
+        var result = ""
+
+        while (index < source.length) {
+            val backup = index
+
+            result += when {
+                previous == '\n' && acceptUlList() -> {
+                    when {
+                        lastReadIndent == level && type == "*" -> "</li><li>"
+                        lastReadIndent < level -> {
+                            // return caret back before list item
+                            // in order to let higher acceptor
+                            // read it again :/
+                            failAcception(backup)
+                            return result
+                        }
+                        else -> "<ul><li>" + readList("*", lastReadIndent) + "</li></ul>"
+                    }
+                }
+                previous == '\n' && acceptOlList() -> {
+                    when {
+                        lastReadIndent == level && type == "." -> "</li><li>"
+                        lastReadIndent < level -> {
+                            failAcception(backup)
+                            return result
+                        }
+                        else -> "<ol><li>" + readList(".", lastReadIndent) + "</li></ol>"
+                    }
+                }
+                accept("~~") -> "<s>" + readPrimitive("~~") + "</s>"
+                accept("**") -> "<b>" + readPrimitive("**") + "</b>"
+                accept("*") -> "<i>" + readPrimitive("*") + "</i>"
+                else -> source[index++]
+            }
+            previous = source[index - 1]
+        }
+
+        return result
+    }
+
+    private fun readParagraph(): String {
+        var previous = '\n'
         var result = ""
 
         while (index < source.length) {
             result += when {
-                accept("\n\n") -> return result + "</p><p>" + acceptParagraph()
-                accept("~~") -> "<s>" + acceptPrimitive("~~") + "</s>"
-                accept("**") -> "<b>" + acceptPrimitive("**") + "</b>"
-                accept("*") -> "<i>" + acceptPrimitive("*") + "</i>"
+                previous == '\n' && acceptUlList() -> "<ul><li>" + readList("*", lastReadIndent) + "</li></ul>"
+                previous == '\n' && acceptOlList() -> "<ol><li>" + readList(".", lastReadIndent) + "</li></ol>"
+                accept("\n\n") -> return result + "</p><p>" + readParagraph()
+                accept("~~") -> "<s>" + readPrimitive("~~") + "</s>"
+                accept("**") -> "<b>" + readPrimitive("**") + "</b>"
+                accept("*") -> "<i>" + readPrimitive("*") + "</i>"
                 else -> source[index++]
             }
+            previous = source[index - 1]
         }
 
         return result
     }
 
     fun toHtml(): String {
-        return "<html><body><p>" + acceptParagraph() + "</p></body></html>"
+        return "<html><body><p>" + readParagraph() + "</p></body></html>"
     }
 }
 
