@@ -561,7 +561,7 @@ fun markdownToHtmlLists(inputName: String, outputName: String) {
 open class TextReader(protected var source: String) {
     protected var index = 0
 
-    fun failAcception(backup: Int): Boolean {
+    protected fun failAcceptation(backup: Int): Boolean {
         index = backup
         return false
     }
@@ -649,7 +649,7 @@ class MarkdownReader(source: String): TextReader(source) {
             indent += 1
 
         if (!accept("*"))
-            return failAcception(backup)
+            return failAcceptation(backup)
 
         lastReadIndent = indent
         return true
@@ -663,10 +663,10 @@ class MarkdownReader(source: String): TextReader(source) {
             indent += 1
 
         if (!acceptNumber())
-            return failAcception(backup)
+            return failAcceptation(backup)
 
         if (!accept("."))
-            return failAcception(backup)
+            return failAcceptation(backup)
 
         lastReadIndent = indent
         return true
@@ -687,7 +687,7 @@ class MarkdownReader(source: String): TextReader(source) {
                             // return caret back before list item
                             // in order to let higher acceptor
                             // read it again :/
-                            failAcception(backup)
+                            failAcceptation(backup)
                             return result
                         }
                         else -> "<ul><li>" + readList("*", lastReadIndent) + "</li></ul>"
@@ -697,11 +697,15 @@ class MarkdownReader(source: String): TextReader(source) {
                     when {
                         lastReadIndent == level && type == "." -> "</li><li>"
                         lastReadIndent < level -> {
-                            failAcception(backup)
+                            failAcceptation(backup)
                             return result
                         }
                         else -> "<ol><li>" + readList(".", lastReadIndent) + "</li></ol>"
                     }
+                }
+                accept("\n\n") -> {
+                    failAcceptation(backup)
+                    return result
                 }
                 accept("~~") -> "<s>" + readPrimitive("~~") + "</s>"
                 accept("**") -> "<b>" + readPrimitive("**") + "</b>"
