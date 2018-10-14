@@ -3,6 +3,7 @@
 package lesson7.task1
 
 import java.io.File
+import kotlin.math.max
 
 /**
  * Пример
@@ -354,18 +355,6 @@ fun chooseLongestChaoticWord(inputName: String, outputName: String) {
     File(outputName).writeText(words.joinToString(", "))
 }
 
-fun accept(symbol: Char, source: String, index: Int): Boolean {
-    return index < source.length && source[index] == symbol
-}
-
-fun accept(token: String, source: String, index: Int): Boolean {
-    token.forEachIndexed { offset, it ->
-        if (!accept(it, source, index + offset))
-            return false
-    }
-    return true
-}
-
 /**
  * Сложная
  *
@@ -510,52 +499,6 @@ fun markdownToHtmlSimple(inputName: String, outputName: String) {
 fun markdownToHtmlLists(inputName: String, outputName: String) {
     val result = MarkdownReader(File(inputName).readText()).toHtml()
     File(outputName).writeText(result)
-//    val lines = File(inputName).readLines()
-//    var prevIndent = -1
-//
-//    val contentStack = mutableListOf<String>()
-//    val statesStack = mutableListOf<String>()
-//
-//    // wrapping up lower lists
-//    fun finalizeList() {
-//        val tag = statesStack.lastOrNull() ?: ""
-//        contentStack[contentStack.size - 2] += "<$tag><li>${contentStack[contentStack.size - 1]}</li></$tag>"
-//        contentStack.removeAt(contentStack.lastIndex)
-//        statesStack.removeAt(statesStack.lastIndex)
-//    }
-//
-//    lines.forEach {
-//        val indent = Regex("""^\s*""").find(it)?.value?.length ?: 0
-//        val listTag = if (it.trimStart().startsWith('*')) "ul" else "ol"
-//        val content = it.replace(Regex("""^\s*(?:\*|\d+\.)"""), "")
-//
-//        when {
-//            indent > prevIndent -> {
-//                statesStack.add(listTag)
-//                contentStack.add(content)
-//            }
-//            indent == prevIndent -> {
-//                contentStack[contentStack.size - 1] += "</li><li>$content"
-//            }
-//            else -> {
-//                finalizeList()
-//                contentStack[contentStack.size - 1] += "</li><li>$content"
-//            }
-//        }
-//
-//        prevIndent = indent
-//    }
-//
-//    // adding a blank top-level item to
-//    // simplify wrapping up the top-level list
-//    statesStack.add(0, "")
-//    contentStack.add(0, "")
-//
-//    // wrap up all nested lists
-//    while (contentStack.size > 1)
-//        finalizeList()
-//
-//    File(outputName).writeText("<html><body>" + contentStack.last() + "</body></html>")
 }
 
 open class TextReader(protected var source: String) {
@@ -707,9 +650,6 @@ class MarkdownReader(source: String): TextReader(source) {
                     failAcceptation(backup)
                     return result
                 }
-                accept("~~") -> "<s>" + readPrimitive("~~") + "</s>"
-                accept("**") -> "<b>" + readPrimitive("**") + "</b>"
-                accept("*") -> "<i>" + readPrimitive("*") + "</i>"
                 else -> source[index++]
             }
             previous = source[index - 1]
@@ -719,27 +659,56 @@ class MarkdownReader(source: String): TextReader(source) {
     }
 
     private fun readParagraph(): String {
-        var previous = '\n'
         var result = ""
 
         while (index < source.length) {
             result += when {
-                previous == '\n' && acceptUlList() -> "<ul><li>" + readList("*", lastReadIndent) + "</li></ul>"
-                previous == '\n' && acceptOlList() -> "<ol><li>" + readList(".", lastReadIndent) + "</li></ol>"
                 accept("\n\n") -> return result + "</p><p>" + readParagraph()
                 accept("~~") -> "<s>" + readPrimitive("~~") + "</s>"
                 accept("**") -> "<b>" + readPrimitive("**") + "</b>"
                 accept("*") -> "<i>" + readPrimitive("*") + "</i>"
                 else -> source[index++]
             }
-            previous = source[index - 1]
         }
 
         return result
     }
 
+    private fun readListOrParagraph(): String {
+        var optionalPAtStart = ""
+        var optionalPAtEnd = ""
+        var result = ""
+
+        while (index < source.length) {
+            result += when {
+                acceptUlList() -> {
+                    if (result.isNotEmpty()) {
+                        optionalPAtStart = "<p>"
+                        optionalPAtEnd = "</p>"
+                        result += "</p><p>"
+                    }
+
+                    "<ul><li>" + readList("*", lastReadIndent) + "</li></ul>"
+                }
+                acceptOlList() -> {
+                    if (result.isNotEmpty()) {
+                        optionalPAtStart = "<p>"
+                        optionalPAtEnd = "</p>"
+                        result += "</p><p>"
+                    }
+
+                    "<ol><li>" + readList(".", lastReadIndent) + "</li></ol>"
+                }
+                accept("\n\n") -> "</p><p>"
+                else -> "<p>" + readParagraph() + "</p>"
+            }
+        }
+
+        return optionalPAtStart + result + optionalPAtEnd
+    }
+
     fun toHtml(): String {
-        return "<html><body><p>" + readParagraph() + "</p></body></html>"
+        return "<html><body>" + readListOrParagraph() + "</body></html>"
     }
 }
 
@@ -752,7 +721,8 @@ class MarkdownReader(source: String): TextReader(source) {
  *
  */
 fun markdownToHtml(inputName: String, outputName: String) {
-    TODO()
+    val result = MarkdownReader(File(inputName).readText())
+    File(outputName).writeText(result.toHtml())
 }
 
 /**
@@ -781,8 +751,42 @@ fun markdownToHtml(inputName: String, outputName: String) {
  *
  */
 fun printMultiplicationProcess(lhv: Int, rhv: Int, outputName: String) {
-    TODO()
+    val maxLengthNumber = max(max(lhv, rhv), lhv * rhv)
+    val maxLength = maxLengthNumber.toString().length + 1
+    val separator = "-".repeat(maxLength) + '\n'
+    val rhvString = rhv.toString()
+
+    // upper part
+    var result = alignLine(lhv.toString(), maxLength)
+    result += '*' + alignLine(rhvString, maxLength - 1)
+    result += separator
+
+    // subroutine for middle block lines
+    // index starts with 0 from the right
+    fun generateFactorLine(digitIndex: Int): String {
+        val digit = rhvString[digitIndex] - '0'
+        val factor = digit * lhv
+        return " ".repeat(digitIndex) + factor.toString()
+    }
+
+    // first line without +
+    result += ' ' + generateFactorLine(rhvString.length - 1) + '\n'
+    for (it in rhvString.length - 2 downTo 0)
+        result += '+' + generateFactorLine(it) + '\n'
+    result += separator
+
+    // there will be \n at the end, so trim it
+    result += alignLine((lhv * rhv).toString(), maxLength)
+    File(outputName).writeText(result.trimEnd())
 }
+
+/**
+ * Returns string with length >= `minWidth`
+ * and with `\n` at the end
+ * @param data the content to be aligned
+ * @param minWidth the required width
+ */
+fun alignLine(data: String, minWidth: Int) = String.format("%${minWidth}s", data) + '\n'
 
 
 /**
@@ -806,6 +810,117 @@ fun printMultiplicationProcess(lhv: Int, rhv: Int, outputName: String) {
  *
  */
 fun printDivisionProcess(lhv: Int, rhv: Int, outputName: String) {
-    TODO()
+    val result = mutableListOf(" $lhv | $rhv")
+    val lhvString = lhv.toString()
+    var printingAllowed = false
+    var answer = ""
+    var indent = 1
+
+    fun generateIndent(indent: Int) = " ".repeat(indent)
+
+    var minuend = ""
+    var minuendSearchingIndex = 0
+
+    while (minuendSearchingIndex < lhvString.length) {
+        // trailing 0 at the beginning can be trimmed later :)
+        minuend += lhvString[minuendSearchingIndex]
+        minuendSearchingIndex++
+
+        if (printingAllowed)
+            result.add(generateIndent(indent) + minuend)    // automatic toString()
+
+        // and... Action!
+        val answerDigit = minuend.toInt() / rhv
+        val nearest = (rhv * answerDigit).toString()
+        answer += answerDigit
+
+        // allow print everything
+        if (answerDigit != 0)
+            printingAllowed = true
+
+        // -1 for '-'
+        indent += minuend.length - nearest.length - 1
+
+        // -value and ---separator---
+        if (printingAllowed || minuendSearchingIndex >= lhvString.length) {
+            result.add(generateIndent(indent) + "-$nearest")
+            result.add(generateIndent(indent) + "-".repeat(nearest.length + 1))
+        }
+
+        // no '-' needed to print so leave +1
+        val difference = (minuend.toInt() - nearest.toInt()).toString()
+        indent += 1 + nearest.length - difference.length
+
+        // if we can't proceed calculations
+        // display the result. The next while check will
+        // fail and no minuend will be print
+        if (minuendSearchingIndex >= lhvString.length)
+            result.add(generateIndent(indent) + difference)
+
+        minuend = difference
+    }
+
+    val spaceLength = 4 + lhvString.length - result[1].length
+    result[1] = result[1] + " ".repeat(spaceLength) + answer.toInt()
+    File(outputName).writeText(result.joinToString("\n"))
+
+
+
+
+
+
+//    val result = mutableListOf(" $lhv | $rhv")
+//    val lhvString = lhv.toString()
+//    var printingAllowed = false
+//    var answer = ""
+//    var indent = 1
+//
+//    fun generateIndent(indent: Int) = " ".repeat(indent)
+//
+//    var minuend = 0
+//    var minuendSearchingIndex = 0
+//
+//    while (minuendSearchingIndex < lhvString.length) {
+//        // trailing 0 at the beginning will be trimmed later :)
+//        minuend = minuend * 10 + (lhvString[minuendSearchingIndex] - '0')
+//        minuendSearchingIndex++
+//
+//        if (printingAllowed)
+//            result.add(generateIndent(indent) + minuend)
+//
+//        // and... Action!
+//        val answerDigit = minuend / rhv
+//        val nearest = rhv * answerDigit
+//        answer += answerDigit
+//
+//        // allow print everything
+//        if (answerDigit != 0)
+//            printingAllowed = true
+//
+//        // -1 for '-'
+//        indent += minuend.toString().length - nearest.toString().length - 1
+//
+//        // -value and ---separator---
+//        if (printingAllowed || minuendSearchingIndex >= lhvString.length) {
+//            result.add(generateIndent(indent) + "-$nearest")
+//            result.add(generateIndent(indent) + "-".repeat(nearest.toString().length + 1))
+//        }
+//
+//        // no '-' needed to print so leave +1
+//        val difference = minuend - nearest
+//        indent += 1 + nearest.toString().length - difference.toString().length
+//
+//        // if we can't proceed calculations
+//        // display the result. The next while check will
+//        // fail and no minuend will be print
+//        if (minuendSearchingIndex >= lhvString.length)
+//            result.add(generateIndent(indent) + difference)
+//
+//        minuend = difference
+//    }
+//
+//    val spaceLength = 4 + lhvString.length - result[1].length
+//    result[1] = result[1] + " ".repeat(spaceLength) + answer.toInt()
+//    File(outputName).writeText(result.joinToString("\n"))
 }
 

@@ -286,6 +286,48 @@ Basic, Ruby, Swift.
         checkHtmlListsExample()
     }
 
+    private fun checkHtmlListsMultipleExample() {
+        val result = File("temp.html").readText().replace(Regex("[\\s\\n\\t]"), "")
+        val expected =
+                """
+                    <html>
+                        <body>
+                            <p>
+                                <ul>
+                                    <li> LOne
+                                        <ul>
+                                            <li> One</li>
+                                            <li> Two</li>
+                                        </ul>
+                                    </li>
+                                    <li> LTwo
+                                        <ol>
+                                            <li> Three</li>
+                                            <li> Four</li>
+                                        </ol>
+                                    </li>
+                                </ul>
+                            </p>
+                            <p>
+                                <ol>
+                                    <li> Five</li>
+                                    <li> Six</li>
+                                </ol>
+                            </p>
+                            <p>
+                                <ul>
+                                    <li> LThree</li>
+                                    <li> LFour</li>
+                                </ul>
+                            </p>
+                        </body>
+                    </html>
+                    """.trimIndent().replace(Regex("[\\s\\n\\t]"), "")
+        assertEquals(expected, result)
+
+        File("temp.html").delete()
+    }
+
     @Test
     @Tag("Impossible")
     fun markdownToHtml() {
@@ -294,6 +336,9 @@ Basic, Ruby, Swift.
 
         markdownToHtml("input/markdown_lists.md", "temp.html")
         checkHtmlListsExample()
+
+        markdownToHtml("input/markdown_lists_multiple.md", "temp.html")
+        checkHtmlListsMultipleExample()
     }
 
     @Test
@@ -356,7 +401,7 @@ Basic, Ruby, Swift.
             File("temp.txt").delete()
         }
 
-        test(199735,
+        test(19935,
              22,
              """
               19935 | 22
