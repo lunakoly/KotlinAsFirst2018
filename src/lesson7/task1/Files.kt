@@ -276,28 +276,22 @@ fun modulate(source: String, pattern: String): String {
  * Обратите внимание: данная функция не имеет возвращаемого значения
  */
 fun transliterate(inputName: String, dictionary: Map<Char, String>, outputName: String) {
-    val regex = dictionary.keys
-            .joinToString("|") { Regex.escape(it.toString()) }
-            .toRegex(RegexOption.IGNORE_CASE)
+    var result = File(inputName).readText()
 
-    val lowerCaseDictionary = dictionary
+    dictionary
             .mapValues { it.value.toLowerCase() }
             .mapKeys { it.key.toLowerCase() }
+            .forEach {
+                result = result.replace(Regex.escape(it.key.toString()).toRegex(RegexOption.IGNORE_CASE)) { that ->
+                    when {
+                        it.value.isEmpty() -> ""
+                        that.value[0].toLowerCase() == that.value[0] -> it.value
+                        else -> it.value[0].toUpperCase() + it.value.substring(1)
+                    }
+                }
+            }
 
-    val text = File(inputName).readText().replace(regex) {
-        val value = lowerCaseDictionary[it.value[0].toLowerCase()] ?: ""
-
-        if (it.value[0].toLowerCase() == it.value[0])
-            value
-        else
-            if (value.isNotEmpty())
-                value[0].toUpperCase() + value.substring(1)
-            else
-                ""
-    }
-
-    println(text)
-    File(outputName).writeText(text)
+    File(outputName).writeText(result)
 }
 
 /**
