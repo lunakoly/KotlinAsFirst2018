@@ -188,6 +188,14 @@ Basic, Ruby, Swift.
         )
         assertFileContent("temp.txt", "Zzdrавствуy,\nmyyr!!!")
         File("temp.txt").delete()
+
+        transliterate(
+                "input/trans_in1_kotoed_test.txt",
+                mapOf('D' to ""),
+                "temp.txt"
+        )
+        assertFileContent("temp.txt", "P5oHk~V?\\\"7 4\\\"xXTwmBY8Y0'Y.<nQ24<}#y%\$*\\noLxE\$L3/>?IZ'lp&V?\\tS`n&GS}_RfsnH{n[AF(l(m;6}[~I kU")
+        File("temp.txt").delete()
     }
 
     @Test
@@ -389,6 +397,22 @@ Basic, Ruby, Swift.
              """
         )
 
+        test(33673,
+                98690,
+                """
+                          33673
+                    *     98690
+                    -----------
+                              0
+                    +   303057
+                    +  202038
+                    + 269384
+                    +303057
+                    -----------
+                     3323188370
+             """
+        )
+
     }
 
     @Test
@@ -446,6 +470,22 @@ Basic, Ruby, Swift.
                  -9
                  --
                   0
+             """
+        )
+
+        test(560071,
+                5123,
+                """
+             560071 | 5123
+            -5123     109
+            -----
+              4777
+                -0
+              ----
+              47771
+             -46107
+             ------
+               1664
              """
         )
 

@@ -290,7 +290,10 @@ fun transliterate(inputName: String, dictionary: Map<Char, String>, outputName: 
         if (it.value[0].toLowerCase() == it.value[0])
             value
         else
-            value[0].toUpperCase() + value.substring(1)
+            if (value.isNotEmpty())
+                value[0].toUpperCase() + value.substring(1)
+            else
+                ""
     }
 
     println(text)
@@ -751,10 +754,13 @@ fun markdownToHtml(inputName: String, outputName: String) {
  *
  */
 fun printMultiplicationProcess(lhv: Int, rhv: Int, outputName: String) {
-    val maxLengthNumber = max(max(lhv, rhv), lhv * rhv)
+    val answer = lhv.toLong() * rhv
+    val maxLengthNumber = max(max(lhv, rhv).toLong(), answer)
     val maxLength = maxLengthNumber.toString().length + 1
     val separator = "-".repeat(maxLength) + '\n'
     val rhvString = rhv.toString()
+
+    println(maxLength)
 
     // upper part
     var result = alignLine(lhv.toString(), maxLength)
@@ -764,19 +770,19 @@ fun printMultiplicationProcess(lhv: Int, rhv: Int, outputName: String) {
     // subroutine for middle block lines
     // index starts with 0 from the right
     fun generateFactorLine(digitIndex: Int): String {
-        val digit = rhvString[digitIndex] - '0'
+        val digit = rhvString[rhvString.length - 1 - digitIndex] - '0'
         val factor = digit * lhv
-        return " ".repeat(digitIndex) + factor.toString()
+        return " ".repeat(maxLength - factor.toString().length - 1 - digitIndex) + factor.toString()
     }
 
     // first line without +
-    result += ' ' + generateFactorLine(rhvString.length - 1) + '\n'
-    for (it in rhvString.length - 2 downTo 0)
+    result += ' ' + generateFactorLine(0) + '\n'
+    for (it in 1 until rhv.toString().length)
         result += '+' + generateFactorLine(it) + '\n'
     result += separator
 
     // there will be \n at the end, so trim it
-    result += alignLine((lhv * rhv).toString(), maxLength)
+    result += alignLine(answer.toString(), maxLength)
     File(outputName).writeText(result.trimEnd())
 }
 
@@ -838,13 +844,20 @@ fun printDivisionProcess(lhv: Int, rhv: Int, outputName: String) {
         if (answerDigit != 0)
             printingAllowed = true
 
+        // save old indent because ---separator---
+        // might need it
+        val oldIndent = indent
         // -1 for '-'
         indent += minuend.length - nearest.length - 1
 
         // -value and ---separator---
         if (printingAllowed || minuendSearchingIndex >= lhvString.length) {
             result.add(generateIndent(indent) + "-$nearest")
-            result.add(generateIndent(indent) + "-".repeat(nearest.length + 1))
+            // nearest is shorter than minuend
+            if (nearest.length + 1 >= minuend.length)
+                result.add(generateIndent(indent) + "-".repeat(nearest.length + 1))
+            else
+                result.add(generateIndent(oldIndent) + "-".repeat(minuend.length))
         }
 
         // no '-' needed to print so leave +1
@@ -863,64 +876,5 @@ fun printDivisionProcess(lhv: Int, rhv: Int, outputName: String) {
     val spaceLength = 4 + lhvString.length - result[1].length
     result[1] = result[1] + " ".repeat(spaceLength) + answer.toInt()
     File(outputName).writeText(result.joinToString("\n"))
-
-
-
-
-
-
-//    val result = mutableListOf(" $lhv | $rhv")
-//    val lhvString = lhv.toString()
-//    var printingAllowed = false
-//    var answer = ""
-//    var indent = 1
-//
-//    fun generateIndent(indent: Int) = " ".repeat(indent)
-//
-//    var minuend = 0
-//    var minuendSearchingIndex = 0
-//
-//    while (minuendSearchingIndex < lhvString.length) {
-//        // trailing 0 at the beginning will be trimmed later :)
-//        minuend = minuend * 10 + (lhvString[minuendSearchingIndex] - '0')
-//        minuendSearchingIndex++
-//
-//        if (printingAllowed)
-//            result.add(generateIndent(indent) + minuend)
-//
-//        // and... Action!
-//        val answerDigit = minuend / rhv
-//        val nearest = rhv * answerDigit
-//        answer += answerDigit
-//
-//        // allow print everything
-//        if (answerDigit != 0)
-//            printingAllowed = true
-//
-//        // -1 for '-'
-//        indent += minuend.toString().length - nearest.toString().length - 1
-//
-//        // -value and ---separator---
-//        if (printingAllowed || minuendSearchingIndex >= lhvString.length) {
-//            result.add(generateIndent(indent) + "-$nearest")
-//            result.add(generateIndent(indent) + "-".repeat(nearest.toString().length + 1))
-//        }
-//
-//        // no '-' needed to print so leave +1
-//        val difference = minuend - nearest
-//        indent += 1 + nearest.toString().length - difference.toString().length
-//
-//        // if we can't proceed calculations
-//        // display the result. The next while check will
-//        // fail and no minuend will be print
-//        if (minuendSearchingIndex >= lhvString.length)
-//            result.add(generateIndent(indent) + difference)
-//
-//        minuend = difference
-//    }
-//
-//    val spaceLength = 4 + lhvString.length - result[1].length
-//    result[1] = result[1] + " ".repeat(spaceLength) + answer.toInt()
-//    File(outputName).writeText(result.joinToString("\n"))
 }
 
