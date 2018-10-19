@@ -276,22 +276,27 @@ fun modulate(source: String, pattern: String): String {
  * Обратите внимание: данная функция не имеет возвращаемого значения
  */
 fun transliterate(inputName: String, dictionary: Map<Char, String>, outputName: String) {
-    var result = File(inputName).readText()
+    val regex = dictionary.keys
+            .joinToString("|") { Regex.escape(it.toString()) }
+            .toRegex(RegexOption.IGNORE_CASE)
 
-    dictionary
+    val lowerCaseDictionary = dictionary
             .mapValues { it.value.toLowerCase() }
             .mapKeys { it.key.toLowerCase() }
-            .forEach {
-                result = result.replace(Regex.escape(it.key.toString()).toRegex(RegexOption.IGNORE_CASE)) { that ->
-                    when {
-                        it.value.isEmpty() -> ""
-                        that.value[0].toLowerCase() == that.value[0] -> it.value
-                        else -> it.value[0].toUpperCase() + it.value.substring(1)
-                    }
-                }
-            }
 
-    File(outputName).writeText(result)
+    val text = File(inputName).readText().replace(regex) {
+        if (it.value.isEmpty())
+            return@replace ""
+
+        val value = lowerCaseDictionary[it.value[0].toLowerCase()] ?: ""
+        when {
+            it.value[0].toLowerCase() == it.value[0] -> value
+            value.isNotEmpty() -> value[0].toUpperCase() + value.substring(1)
+            else -> ""
+        }
+    }
+
+    File(outputName).writeText(text)
 }
 
 /**
@@ -323,14 +328,14 @@ fun chooseLongestChaoticWord(inputName: String, outputName: String) {
     var maxLength = -1
 
     File(inputName).readLines().forEach {
-        val repetitions = mutableMapOf<Char, Boolean>()
+        val repetitions = mutableSetOf<Char>()
 
         // if has repeating chars
         for (char in it) {
-            if (repetitions[char.toLowerCase()] != null)
+            if (char.toLowerCase() in repetitions)
                 return@forEach
             else
-                repetitions[char.toLowerCase()] = true
+                repetitions.add(char.toLowerCase())
         }
 
         // add
@@ -705,7 +710,19 @@ class MarkdownReader(source: String): TextReader(source) {
     }
 
     fun toHtml(): String {
-        return "<html><body>" + readListOrParagraph() + "</body></html>"
+        var content = readListOrParagraph()
+
+        /*
+        very dirty thing(
+        but it's required for markdownToHtmlSimple to complete
+        the tests like "<html><body><p></p></body></html>".
+        actually this task can be improoved and I wrote Marat about it
+        */
+
+        if (content.isEmpty())
+            content = "<p>$content</p>"
+
+        return "<html><body>$content</body></html>"
     }
 }
 

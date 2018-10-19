@@ -196,6 +196,14 @@ Basic, Ruby, Swift.
         )
         assertFileContent("temp.txt", "P5oHk~V?\\\"7 4\\\"xXTwmBY8Y0'Y.<nQ24<}#y%\$*\\noLxE\$L3/>?IZ'lp&V?\\tS`n&GS}_RfsnH{n[AF(l(m;6}[~I kU")
         File("temp.txt").delete()
+
+        transliterate(
+                "input/trans_in1_kotoed_test_2.txt",
+                mapOf(),
+                "temp.txt"
+        )
+        assertFileContent("temp.txt", "PD5oHk~V?\\\"7 d4\\\"xXTwmBY8Y0'Y.<nQ24<}#y%\$*\\nodLxE\$L3/>?IZ'Dlp&V?\\tS`n&GS}_RfsnH{n[AF(l(m;6}[~I dkU")
+        File("temp.txt").delete()
     }
 
     @Test
