@@ -837,6 +837,7 @@ fun printDivisionProcess(lhv: Int, rhv: Int, outputName: String) {
 
     var minuend = ""
     var minuendSearchingIndex = 0
+    var wasFirstMinuendPrinted = false
 
     while (minuendSearchingIndex < lhvString.length) {
         // trailing 0 at the beginning can be trimmed later :)
@@ -864,8 +865,20 @@ fun printDivisionProcess(lhv: Int, rhv: Int, outputName: String) {
         // -value and ---separator---
         if (printingAllowed || minuendSearchingIndex >= lhvString.length) {
             result.add(generateIndent(indent) + "-$nearest")
-            // nearest is shorter than minuend
-            if (nearest.length + 1 >= minuend.length)
+
+            // dirty hack to a problem which I told Marat about
+            /*
+             120302 | 94856                         120302 | 94856
+             -94856   1                             -94856   1
+            -------                 -->             ------
+              25446                                  25446
+            */
+            if (!wasFirstMinuendPrinted) {
+                result.add("-".repeat(oldIndent + minuend.length))
+                wasFirstMinuendPrinted = true
+
+            // nearest is longer than minuend
+            } else if (nearest.length + 1 >= minuend.length)
                 result.add(generateIndent(indent) + "-".repeat(nearest.length + 1))
             else
                 result.add(generateIndent(oldIndent) + "-".repeat(minuend.length))
