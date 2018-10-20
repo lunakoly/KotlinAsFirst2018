@@ -185,11 +185,36 @@ fun lineBySegment(s: Segment) = lineByPoints(s.begin, s.end)
  */
 fun lineByPoints(a: Point, b: Point): Line {
     val angle = atan2(b.y - a.y, b.x - a.x)
+    println("a = $a")
+    println("b = $b")
+    println("angle = $angle")
+    println("trans = " + transformAngle(angle))
+    return Line(a, transformAngle(angle))
+}
+
+/**
+ * An attempt to fix the bug with tiny negative
+ * doubles summed with PI
+ * @param angle the angle to be transformed to fit the [0; PI)
+ */
+fun transformAngle(angle: Double): Double {
+    // it's definitely not ok
+    // -2.220446049250313E-16 is < 0.0
+    // but -2.220446049250313E-16 + PI == PI
+    // especially when Double.MIN_VALUE = 4.9E-324
+    // al right, let's deal with it!
+    fun isFuckingBugNumber(n: Double) = n < 0.0 && n + PI == PI
+
+    // println("pi = $PI")
+    // println("angle = $angle")
+    // println("angle + pi = ${angle + PI}")
+    // println("isFuckingBug = " + isFuckingBugNumber(angle))
 
     return when {
-        angle >= PI -> Line(a, angle - PI)
-        angle >= 0 -> Line(a, angle)
-        else -> Line(b, angle + PI)
+        isFuckingBugNumber(angle) -> 0.0
+        angle >= PI -> angle - PI
+        angle >= 0 -> angle
+        else -> angle + PI
     }
 }
 
@@ -200,28 +225,8 @@ fun lineByPoints(a: Point, b: Point): Line {
  */
 fun bisectorByPoints(a: Point, b: Point): Line {
     val center = Point((a.x + b.x) / 2, (a.y + b.y) / 2)
-    var angle = atan2(b.y - a.y, b.x - a.x) + PI/2
-
-    // it's definitely not ok
-    // -2.220446049250313E-16 is < 0.0
-    // but -2.220446049250313E-16 + PI == PI
-    // especially when Double.MIN_VALUE = 4.9E-324
-    // al right, let's deal with it!
-    fun isFuckingBugNumber(n: Double) = n < 0.0 && n + PI == PI
-
-    println("pi = $PI")
-    println("angle = $angle")
-    println("angle + pi = ${angle + PI}")
-    println("isFuckingBug = " + isFuckingBugNumber(angle))
-
-    if (isFuckingBugNumber(angle))
-        angle = 0.0
-
-    return when {
-        angle >= PI -> Line(center, angle - PI)
-        angle >= 0 -> Line(center, angle)
-        else -> Line(center, angle + PI)
-    }
+    val angle = atan2(b.y - a.y, b.x - a.x) + PI/2
+    return Line(center, transformAngle(angle))
 }
 
 /**
