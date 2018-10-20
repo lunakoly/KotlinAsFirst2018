@@ -186,10 +186,11 @@ fun lineBySegment(s: Segment) = lineByPoints(s.begin, s.end)
 fun lineByPoints(a: Point, b: Point): Line {
     val angle = atan2(b.y - a.y, b.x - a.x)
 
-    return if (angle >= 0)
-        Line(a, angle)
-    else
-        Line(b, angle + PI)
+    return when {
+        angle >= PI -> Line(a, angle - PI)
+        angle >= 0 -> Line(a, angle)
+        else -> Line(b, angle + PI)
+    }
 }
 
 /**
@@ -201,12 +202,11 @@ fun bisectorByPoints(a: Point, b: Point): Line {
     val center = Point((a.x + b.x) / 2, (a.y + b.y) / 2)
     val angle = atan2(b.y - a.y, b.x - a.x) + PI/2
 
-    return if (angle >= PI)
-        Line(center, angle - PI)
-    else if (angle >= 0)
-        Line(center, angle)
-    else
-        Line(center, angle + PI)
+    return when {
+        angle >= PI -> Line(center, angle - PI)
+        angle >= 0 -> Line(center, angle)
+        else -> Line(center, angle + PI)
+    }
 }
 
 /**
