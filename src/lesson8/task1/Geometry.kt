@@ -200,7 +200,22 @@ fun lineByPoints(a: Point, b: Point): Line {
  */
 fun bisectorByPoints(a: Point, b: Point): Line {
     val center = Point((a.x + b.x) / 2, (a.y + b.y) / 2)
-    val angle = atan2(b.y - a.y, b.x - a.x) + PI/2
+    var angle = atan2(b.y - a.y, b.x - a.x) + PI/2
+
+    // it's definitely not ok
+    // -2.220446049250313E-16 is < 0.0
+    // but -2.220446049250313E-16 + PI == PI
+    // especially when Double.MIN_VALUE = 4.9E-324
+    // al right, let's deal with it!
+    fun isFuckingBugNumber(n: Double) = n < 0.0 && n + PI == PI
+
+    println("pi = $PI")
+    println("angle = $angle")
+    println("angle + pi = ${angle + PI}")
+    println("isFuckingBug = " + isFuckingBugNumber(angle))
+
+    if (isFuckingBugNumber(angle))
+        angle = 0.0
 
     return when {
         angle >= PI -> Line(center, angle - PI)
