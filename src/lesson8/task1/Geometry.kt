@@ -185,10 +185,6 @@ fun lineBySegment(s: Segment) = lineByPoints(s.begin, s.end)
  */
 fun lineByPoints(a: Point, b: Point): Line {
     val angle = atan2(b.y - a.y, b.x - a.x)
-    println("a = $a")
-    println("b = $b")
-    println("angle = $angle")
-    println("trans = " + transformAngle(angle))
     return Line(a, transformAngle(angle))
 }
 

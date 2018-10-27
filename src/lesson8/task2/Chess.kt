@@ -1,6 +1,9 @@
 @file:Suppress("UNUSED_PARAMETER")
 package lesson8.task2
 
+import kotlin.math.PI
+import kotlin.math.atan2
+
 /**
  * Клетка шахматной доски. Шахматная доска квадратная и имеет 8 х 8 клеток.
  * Поэтому, обе координаты клетки (горизонталь row, вертикаль column) могут находиться в пределах от 1 до 8.
@@ -21,7 +24,7 @@ data class Square(val column: Int, val row: Int) {
      * В нотации, колонки обозначаются латинскими буквами от a до h, а ряды -- цифрами от 1 до 8.
      * Для клетки не в пределах доски вернуть пустую строку
      */
-    fun notation(): String = TODO()
+    fun notation(): String = if (!inside()) "" else ('a' + column - 1) + row.toString()
 }
 
 /**
@@ -31,7 +34,14 @@ data class Square(val column: Int, val row: Int) {
  * В нотации, колонки обозначаются латинскими буквами от a до h, а ряды -- цифрами от 1 до 8.
  * Если нотация некорректна, бросить IllegalArgumentException
  */
-fun square(notation: String): Square = TODO()
+fun square(notation: String): Square {
+    if (!Regex("""[a-h][1-8]""").matches(notation))
+        throw IllegalArgumentException()
+
+    val column = notation[0] - 'a' + 1
+    val row = notation[1] - '0'
+    return Square(column, row)
+}
 
 /**
  * Простая
@@ -56,7 +66,23 @@ fun square(notation: String): Square = TODO()
  * Пример: rookMoveNumber(Square(3, 1), Square(6, 3)) = 2
  * Ладья может пройти через клетку (3, 3) или через клетку (6, 1) к клетке (6, 3).
  */
-fun rookMoveNumber(start: Square, end: Square): Int = TODO()
+fun rookMoveNumber(start: Square, end: Square): Int {
+    if (!start.inside() || !end.inside())
+        throw IllegalArgumentException()
+
+    var steps = 0
+
+    if (start.column != end.column)
+        steps++
+
+    if (start.row != end.row)
+        steps++
+
+    return steps
+
+    // I wish I could write
+    // return (start.column != end.column) + (start.row != end.row)
+}
 
 /**
  * Средняя
@@ -72,7 +98,17 @@ fun rookMoveNumber(start: Square, end: Square): Int = TODO()
  *          rookTrajectory(Square(3, 5), Square(8, 5)) = listOf(Square(3, 5), Square(8, 5))
  * Если возможно несколько вариантов самой быстрой траектории, вернуть любой из них.
  */
-fun rookTrajectory(start: Square, end: Square): List<Square> = TODO()
+fun rookTrajectory(start: Square, end: Square): List<Square> {
+    val trajectory = mutableListOf(start)
+
+    if (trajectory.last().column != end.column)
+        trajectory.add(Square(end.column, trajectory.last().row))
+
+    if (trajectory.last().row != end.row)
+        trajectory.add(Square(trajectory.last().column, end.row))
+
+    return trajectory
+}
 
 /**
  * Простая
@@ -97,7 +133,23 @@ fun rookTrajectory(start: Square, end: Square): List<Square> = TODO()
  * Примеры: bishopMoveNumber(Square(3, 1), Square(6, 3)) = -1; bishopMoveNumber(Square(3, 1), Square(3, 7)) = 2.
  * Слон может пройти через клетку (6, 4) к клетке (3, 7).
  */
-fun bishopMoveNumber(start: Square, end: Square): Int = TODO()
+fun bishopMoveNumber(start: Square, end: Square): Int {
+    if (!start.inside() || !end.inside())
+        throw IllegalArgumentException()
+
+    if ((start.column + start.row) % 2 != (end.row + end.column) % 2)
+        return -1
+
+    var steps = 0
+
+    if (start.column + start.row != end.row + end.column)
+        steps++
+
+    if (start.row - start.column != end.row - end.column)
+        steps++
+
+    return steps
+}
 
 /**
  * Сложная
@@ -117,7 +169,35 @@ fun bishopMoveNumber(start: Square, end: Square): Int = TODO()
  *          bishopTrajectory(Square(1, 3), Square(6, 8)) = listOf(Square(1, 3), Square(6, 8))
  * Если возможно несколько вариантов самой быстрой траектории, вернуть любой из них.
  */
-fun bishopTrajectory(start: Square, end: Square): List<Square> = TODO()
+fun bishopTrajectory(start: Square, end: Square): List<Square> {
+    if ((start.column + start.row) % 2 != (end.row + end.column) % 2)
+        return emptyList()
+
+    val trajectory = mutableListOf(start)
+    val mainDifference = (end.row + end.column - trajectory.last().row - trajectory.last().column) / 2
+    val secondaryDifference = (end.row - end.column - trajectory.last().row + trajectory.last().column) / 2
+
+    if (mainDifference != 0)
+        trajectory.add(Square(
+                trajectory.last().column + mainDifference,
+                trajectory.last().row + mainDifference))
+
+    if (secondaryDifference != 0)
+        trajectory.add(Square(
+                trajectory.last().column - secondaryDifference,
+                trajectory.last().row + secondaryDifference))
+
+    // we might have got an out of bounds square
+    // let's check if that's true and in that case
+    // reapply transitions in another order
+
+    if (trajectory.size == 3 && !trajectory[1].inside())
+        trajectory[1] = Square(
+                start.column - secondaryDifference,
+                start.row + secondaryDifference)
+
+    return trajectory
+}
 
 /**
  * Средняя
@@ -139,7 +219,11 @@ fun bishopTrajectory(start: Square, end: Square): List<Square> = TODO()
  * Пример: kingMoveNumber(Square(3, 1), Square(6, 3)) = 3.
  * Король может последовательно пройти через клетки (4, 2) и (5, 2) к клетке (6, 3).
  */
-fun kingMoveNumber(start: Square, end: Square): Int = TODO()
+fun kingMoveNumber(start: Square, end: Square): Int {
+    if (!start.inside() || !end.inside())
+        throw IllegalArgumentException()
+    return kingTrajectory(start, end).size - 1
+}
 
 /**
  * Сложная
@@ -155,7 +239,32 @@ fun kingMoveNumber(start: Square, end: Square): Int = TODO()
  *          kingTrajectory(Square(3, 5), Square(6, 2)) = listOf(Square(3, 5), Square(4, 4), Square(5, 3), Square(6, 2))
  * Если возможно несколько вариантов самой быстрой траектории, вернуть любой из них.
  */
-fun kingTrajectory(start: Square, end: Square): List<Square> = TODO()
+fun kingTrajectory(start: Square, end: Square): List<Square> {
+    val trajectory = mutableListOf(start)
+
+    while (trajectory.last() != end) {
+        val dy = end.row - trajectory.last().row
+        val dx = end.column - trajectory.last().column
+
+        // we have 8 directions -> PI/4 ranges
+        // let's get rid of [-PI/8; +PI/8)
+        val direction = atan2(dy.toDouble(), dx.toDouble()) - PI/8
+        val next = when {
+            direction <= -PI/4 * 3 -> Square(trajectory.last().column - 1, trajectory.last().row - 1)
+            direction <= -PI/2 -> Square(trajectory.last().column, trajectory.last().row - 1)
+            direction <= -PI/4 -> Square(trajectory.last().column + 1, trajectory.last().row - 1)
+            direction <= 0 -> Square(trajectory.last().column + 1, trajectory.last().row)
+            direction <= PI/4 -> Square(trajectory.last().column + 1, trajectory.last().row + 1)
+            direction <= PI/2 -> Square(trajectory.last().column, trajectory.last().row + 1)
+            direction <= PI/4 * 3  -> Square(trajectory.last().column - 1, trajectory.last().row + 1)
+            else -> Square(trajectory.last().column - 1, trajectory.last().row)
+        }
+
+        trajectory.add(next)
+    }
+
+    return trajectory
+}
 
 /**
  * Сложная
@@ -180,7 +289,11 @@ fun kingTrajectory(start: Square, end: Square): List<Square> = TODO()
  * Пример: knightMoveNumber(Square(3, 1), Square(6, 3)) = 3.
  * Конь может последовательно пройти через клетки (5, 2) и (4, 4) к клетке (6, 3).
  */
-fun knightMoveNumber(start: Square, end: Square): Int = TODO()
+fun knightMoveNumber(start: Square, end: Square): Int {
+    if (!start.inside() || !end.inside())
+        throw IllegalArgumentException()
+    return knightTrajectory(start, end).size - 1
+}
 
 /**
  * Очень сложная
@@ -202,4 +315,59 @@ fun knightMoveNumber(start: Square, end: Square): Int = TODO()
  *
  * Если возможно несколько вариантов самой быстрой траектории, вернуть любой из них.
  */
-fun knightTrajectory(start: Square, end: Square): List<Square> = TODO()
+fun knightTrajectory(start: Square, end: Square): List<Square> {
+    // traceMap[cell] -> shortest path previous cell
+    // hopsMap[cell] -> min count of hops we need to perform
+    // to get to that cell
+
+    val traceMap = mutableMapOf<Square, Square?>()
+    val hopsMap = mutableMapOf<Square, Int>()
+
+    fun <T> MutableList<T>.pop() = this.removeAt(lastIndex)
+
+    // depth-first search parameters for i-th square
+
+    val parentsStack = mutableListOf<Square?>(null)
+    val traceStack = mutableListOf(start)
+    val hopsStack = mutableListOf(0)
+
+    while (traceStack.isNotEmpty()) {
+        val parent = parentsStack.pop()
+        val square = traceStack.pop()
+        val hop = hopsStack.pop()
+
+        if (!square.inside())
+            continue
+
+        // if this cell can potentially give us a shorter way
+
+        if (hopsMap.getOrDefault(square, Int.MAX_VALUE) > hop) {
+            traceMap[square] = parent
+            hopsMap[square] = hop
+
+            // add all the near cells to visiting stack
+
+            for (i in 0..7) {
+                val sign1 = 2 * (i % 2) - 1
+                val sign2 = 2 * ((i / 2) % 2) - 1
+                val step = if ((i / 4) % 2 == 0) 2 else 1
+
+                traceStack.add(Square(square.column + sign1 * step, square.row + sign2 * (3 - step)))
+                parentsStack.add(square)
+                hopsStack.add(hop + 1)
+            }
+        }
+    }
+
+    // start walking back to front and collect the whole path
+
+    val trajectory = mutableListOf<Square>()
+    var current: Square? = end
+
+    while (current != null) {
+        trajectory.add(current)
+        current = traceMap[current]
+    }
+
+    return trajectory.reversed()
+}

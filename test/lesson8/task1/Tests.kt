@@ -174,6 +174,7 @@ class Tests {
         assertApproxEquals(Line(Point(1.0, 1.0), PI / 4), lineByPoints(Point(1.0, 1.0), Point(3.0, 3.0)))
     }
 
+
     @Test
     @Tag("Hard")
     fun bisectorByPoints() {
