@@ -80,7 +80,7 @@ data class Circle(val center: Point, val radius: Double) {
      *
      * Вернуть true, если и только если окружность содержит данную точку НА себе или ВНУТРИ себя
      */
-    fun contains(p: Point) = center.distance(p) <= radius + 1e-5
+    fun contains(p: Point) = center.distance(p) <= radius + 1e-13
 
     // I'd suggest using 'sqr(center.x - p.x) + sqr(center.y - p.y) <= sqr(radius)'
     // but it causes some errors with the last test, so i just added a little delta
