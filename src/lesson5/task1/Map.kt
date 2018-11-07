@@ -165,7 +165,7 @@ fun findCheapestStuff(stuff: Map<String, Pair<String, Double>>, kind: String): S
         ?.component1()
 
 /**
- * Returns set of nodes reachable from the
+ * Returns drop of nodes reachable from the
  * given one
  * @param start the node to start searching from
  * @param graph the thing used to determine
