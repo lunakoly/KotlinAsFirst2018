@@ -243,21 +243,19 @@ fun kingTrajectory(start: Square, end: Square): List<Square> {
     val trajectory = mutableListOf(start)
 
     while (trajectory.last() != end) {
-        val dy = end.row - trajectory.last().row
         val dx = end.column - trajectory.last().column
+        val dy = end.row - trajectory.last().row
+        val last = trajectory.last()
 
-        // we have 8 directions -> PI/4 ranges
-        // let's get rid of [-PI/8; +PI/8)
-        val direction = atan2(dy.toDouble(), dx.toDouble()) - PI/8
         val next = when {
-            direction <= -PI/4 * 3 -> Square(trajectory.last().column - 1, trajectory.last().row - 1)
-            direction <= -PI/2 -> Square(trajectory.last().column, trajectory.last().row - 1)
-            direction <= -PI/4 -> Square(trajectory.last().column + 1, trajectory.last().row - 1)
-            direction <= 0 -> Square(trajectory.last().column + 1, trajectory.last().row)
-            direction <= PI/4 -> Square(trajectory.last().column + 1, trajectory.last().row + 1)
-            direction <= PI/2 -> Square(trajectory.last().column, trajectory.last().row + 1)
-            direction <= PI/4 * 3  -> Square(trajectory.last().column - 1, trajectory.last().row + 1)
-            else -> Square(trajectory.last().column - 1, trajectory.last().row)
+            dx == 0 && dy > 0 -> Square(last.column, last.row + 1)
+            dx == 0 && dy < 0 -> Square(last.column, last.row - 1)
+            dx > 0 && dy == 0 -> Square(last.column + 1, last.row)
+            dx < 0 && dy == 0 -> Square(last.column - 1, last.row)
+            dx > 0 && dy > 0 -> Square(last.column + 1, last.row + 1)
+            dx < 0 && dy < 0 -> Square(last.column - 1, last.row - 1)
+            dx < 0 && dy > 0 -> Square(last.column - 1, last.row + 1)
+            else -> Square(last.column + 1, last.row - 1)
         }
 
         trajectory.add(next)
