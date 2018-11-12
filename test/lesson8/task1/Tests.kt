@@ -300,5 +300,20 @@ class Tests {
         for (p in listOf(p56, p57, p58, p59)) {
             assertTrue(result4.contains(p))
         }
+
+        val p60 = Point(0.0, 0.6894539007468599)
+        val p61 = Point(0.8678173172224616, 0.4612623649825762)
+        val p62 = Point(-5e-324, 0.3010657187588014)
+        val p63 = Point(-632.0, 0.48917674675573264)
+        val p64 = Point(-632.0, 2.220446049250313e-16)
+        val p65 = Point(-2.220446049250313e-16, -632.0)
+        val p66 = Point(0.5783357743451611, -5e-324)
+        val result5 = minContainingCircle(p60, p61, p62, p63, p64, p65, p66)
+        // center: (-315.58002105615776, -315.3357575008812)
+
+        assertEquals(447.06486349001494, result5.radius, 0.02)
+        for (p in listOf(p60, p61, p62, p63, p64, p65, p66)) {
+            assertTrue(result5.contains(p))
+        }
     }
 }
