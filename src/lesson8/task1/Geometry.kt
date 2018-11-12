@@ -129,7 +129,11 @@ fun diameter(vararg points: Point): Segment {
  * Построить окружность по её диаметру, заданному двумя точками
  * Центр её должен находиться посередине между точками, а радиус составлять половину расстояния между ними
  */
-fun circleByDiameter(diameter: Segment) = Circle(diameter.center, diameter.length / 2)
+fun circleByDiameter(diameter: Segment): Circle {
+    val center = diameter.center
+    val radius = max(center.distance(diameter.begin), center.distance(diameter.end))
+    return Circle(center, radius)
+}
 
 /**
  * Прямая, заданная точкой point и углом наклона angle (в радианах) по отношению к оси X.
@@ -197,20 +201,8 @@ fun lineByPoints(a: Point, b: Point): Line {
  * @param angle the angle to be transformed to fit the [0; PI)
  */
 fun transformAngle(angle: Double): Double {
-    // it's definitely not ok
-    // -2.220446049250313E-16 is < 0.0
-    // but -2.220446049250313E-16 + PI == PI
-    // especially when Double.MIN_VALUE = 4.9E-324
-    // al right, let's deal with it!
-    fun isFuckingBugNumber(n: Double) = n < 0.0 && n + PI == PI
-
-    // println("pi = $PI")
-    // println("angle = $angle")
-    // println("angle + pi = ${angle + PI}")
-    // println("isFuckingBug = " + isFuckingBugNumber(angle))
-
     return when {
-        isFuckingBugNumber(angle) -> 0.0
+        angle < 0 && angle > -PI.ulp -> 0.0
         angle >= PI -> angle - PI
         angle >= 0 -> angle
         else -> angle + PI
@@ -292,7 +284,7 @@ fun minContainingCircle(vararg points: Point): Circle {
     var minimumRadiusCircle = circleByThreePoints(points[0], points[1], points[2])
     var isFirst = true
 
-    println(">------------------<")
+//    println(">------------------<")
 
     for (i in 0 until points.size - 2)
         for (j in i + 1 until points.size - 1)
@@ -300,22 +292,22 @@ fun minContainingCircle(vararg points: Point): Circle {
                 val newCircle = circleByThreePoints(points[i], points[j], points[k])
                 val containsAll = points.all { newCircle.contains(it) }
 
-                if (abs(newCircle.radius - 447.54504496817634) < 0.02) {
-                    println("MinRadius: " + minimumRadiusCircle.radius)
-                    println("> ContainsAll: $containsAll")
-                    println("> Center: " + newCircle.center)
-                    println("> Radius:   " + newCircle.radius)
-
-                    val missing = points.firstOrNull { !newCircle.contains(it) }
-                    if (missing != null) {
-                        println("> Distance: " + newCircle.center.distance(missing))
-                        println("> FirstMissing: $missing")
-                    }
-                }
+//                if (abs(newCircle.radius - 447.54504496817634) < 0.02) {
+//                    println("MinRadius: " + minimumRadiusCircle.radius)
+//                    println("> ContainsAll: $containsAll")
+//                    println("> Center: " + newCircle.center)
+//                    println("> Radius:   " + newCircle.radius)
+//
+//                    val missing = points.firstOrNull { !newCircle.contains(it) }
+//                    if (missing != null) {
+//                        println("> Distance: " + newCircle.center.distance(missing))
+//                        println("> FirstMissing: $missing")
+//                    }
+//                }
 
                 if (containsAll) {
                     if (isFirst || newCircle.radius < minimumRadiusCircle.radius) {
-                        println(">> Set: " + newCircle.radius)
+//                        println(">> Set: " + newCircle.radius)
                         minimumRadiusCircle = newCircle
                         isFirst = false
                     }
@@ -327,22 +319,30 @@ fun minContainingCircle(vararg points: Point): Circle {
             val newCircle = circleByDiameter(Segment(points[i], points[j]))
             val containsAll = points.all { newCircle.contains(it) }
 
-            if (abs(newCircle.radius - 447.54504496817634) < 0.02) {
-                println("MinRadius: " + minimumRadiusCircle.radius)
-                println("> ContainsAll: $containsAll")
-                println("> Center: " + newCircle.center)
-                println("> Radius:   " + newCircle.radius)
+//            if (!newCircle.contains(points[i]) || !newCircle.contains(points[j])) {
+//                println(">>>>>>>>>>>>>>>>>>>>>>>>>")
+//                println("Circle: $newCircle")
+//                println("MinRadius: ${minimumRadiusCircle.radius}")
+//                println("i: " + points[i])
+//                println("j: " + points[j])
+//            }
 
-                val missing = points.firstOrNull { !newCircle.contains(it) }
-                if (missing != null) {
-                    println("> Distance: " + newCircle.center.distance(missing))
-                    println("> FirstMissing: $missing")
-                }
-            }
+//            if (abs(newCircle.radius - 447.54504496817634) < 0.02) {
+//                println("MinRadius: " + minimumRadiusCircle.radius)
+//                println("> ContainsAll: $containsAll")
+//                println("> Center: " + newCircle.center)
+//                println("> Radius:   " + newCircle.radius)
+//
+//                val missing = points.firstOrNull { !newCircle.contains(it) }
+//                if (missing != null) {
+//                    println("> Distance: " + newCircle.center.distance(missing))
+//                    println("> FirstMissing: $missing")
+//                }
+//            }
 
             if (containsAll) {
                 if (newCircle.radius < minimumRadiusCircle.radius) {
-                    println(">> Set: " + newCircle.radius)
+//                    println(">> Set: " + newCircle.radius)
                     minimumRadiusCircle = newCircle
                 }
             }
