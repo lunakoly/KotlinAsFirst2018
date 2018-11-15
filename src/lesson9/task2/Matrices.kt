@@ -277,6 +277,20 @@ fun isLatinSquare(matrix: Matrix<Int>): Boolean {
 }
 
 /**
+ * Returns value located at (row, column) if it exists.
+ * Otherwise returns the `default`
+ */
+fun <E> Matrix<E>.getOrDefault(row: Int, column: Int, default: E) =
+    if (column in 0 until width && row in 0 until height) get(row, column)
+    else default
+
+/**
+ * Returns value located at (row, column) if it exists.
+ * Otherwise returns 0
+ */
+fun Matrix<Int>.tryGet(row: Int, column: Int) = getOrDefault(row,  column, 0)
+
+/**
  * Средняя
  *
  * В матрице matrix каждый элемент заменить суммой непосредственно примыкающих к нему
@@ -296,19 +310,17 @@ fun isLatinSquare(matrix: Matrix<Int>): Boolean {
 fun sumNeighbours(matrix: Matrix<Int>): Matrix<Int> {
     val transformed = createMatrix(matrix.height, matrix.width, 0)
 
-    fun tryGet(row: Int, column: Int) = try { matrix[row, column] } catch (e: Exception) { 0 }
-
     for (row in 0 until matrix.height)
         for (column in 0 until matrix.width)
             transformed[row, column] +=
-                    tryGet(row - 1, column) +
-                    tryGet(row - 1, column + 1) +
-                    tryGet(row, column + 1) +
-                    tryGet(row + 1, column + 1) +
-                    tryGet(row + 1, column) +
-                    tryGet(row + 1, column - 1) +
-                    tryGet(row, column - 1) +
-                    tryGet(row - 1, column - 1)
+                    matrix.tryGet(row - 1, column) +
+                    matrix.tryGet(row - 1, column + 1) +
+                    matrix.tryGet(row, column + 1) +
+                    matrix.tryGet(row + 1, column + 1) +
+                    matrix.tryGet(row + 1, column) +
+                    matrix.tryGet(row + 1, column - 1) +
+                    matrix.tryGet(row, column - 1) +
+                    matrix.tryGet(row - 1, column - 1)
 
     return transformed
 }
@@ -380,11 +392,14 @@ data class Holes(val rows: List<Int>, val columns: List<Int>)
 fun sumSubMatrix(matrix: Matrix<Int>): Matrix<Int> {
     val transformed = createMatrix(matrix.height, matrix.width, 0)
 
-    for (row in 0 until matrix.height)
-        for (column in 0 until matrix.width)
-            for (subRow in 0..row)
-                for (subColumn in 0..column)
-                    transformed[row, column] += matrix[subRow, subColumn]
+    for (row in 0 until matrix.height) {
+        var lineSum = 0
+
+        for (column in 0 until matrix.width) {
+            lineSum += matrix[row, column]
+            transformed[row, column] = lineSum + transformed.tryGet(row - 1, column)
+        }
+    }
 
     return transformed
 }

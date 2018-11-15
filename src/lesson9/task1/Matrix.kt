@@ -90,16 +90,16 @@ class MatrixImpl<E>(override val width: Int, override val height: Int, initialVa
     }
 
     override fun toString(): String {
-        var result = ""
+        val result = StringBuilder()
 
         for (row in 0 until height) {
-            result += "|"
+            result.append('|')
             for (column in 0 until width)
-                result += ' ' + get(row, column).toString()
-            result += " |\n"
+                result.append(' ' + get(row, column).toString())
+            result.append(" |\n")
         }
 
-        return result.trimEnd()
+        return result.trimEnd().toString()
     }
 }
 
